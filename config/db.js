@@ -15,7 +15,7 @@
 
 
 const mongoose = require("mongoose");
-const mongodbUrl = "mongodb://127.0.0.1:27017/ExpertzDB";
+const mongodbUrl = "mongodb+srv://ExpertzCareers:Aakash1122@cluster0.klxjm43.mongodb.net/ExpertzCareerDB?retryWrites=true&w=majority&appName=Cluster0";
 
 
 mongoose
