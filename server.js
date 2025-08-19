@@ -16,7 +16,8 @@ const userRoutes = require("./Router/UserRoute");
 const JobRoutes = require("./Router/JobRouter");
 app.use("/user", userRoutes);
 app.use("/job", JobRoutes); 
-app.listen(3000, () => {
+const port = 3000||process.env.PORT
+app.listen(port, () => {
   console.log(`Server is Running http://localhost:3000`);
 });
 
