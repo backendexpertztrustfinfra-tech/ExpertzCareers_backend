@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-.env
-node_modules/
-=======
+
 node_modules/
 .env
->>>>>>> fbe4f84 (Fixing Recruiter APIs)
