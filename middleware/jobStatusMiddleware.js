@@ -7,6 +7,9 @@ const jobStatusMiddleware = async (req, res, next) => {
       jobData.status = "pending"
     }
 
+    const userId = req.jwtPayload.id;
+    jobData.jobCreatedby = userId;
+
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30)
     jobData.expiryDate = expiryDate
@@ -17,7 +20,7 @@ const jobStatusMiddleware = async (req, res, next) => {
     setTimeout(async () => {
       await Jobs.findByIdAndUpdate(job._id, { status: "live" });
       console.log(`Job ${job._id} job is live `);
-    }, 20000) // 2 minutes for testing, change to 2592000000 for 30 days
+    }, 50000) // 5 minutes for testing, change to 2592000000 for 30 days
 
     req.job = job;
     next()
