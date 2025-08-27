@@ -65,8 +65,21 @@ const jobSchema = mongoose.Schema({
     },
     status:{
         type:String,
+<<<<<<< HEAD
         default:"pending"
     },
+=======
+        enum:["pending","live","close"],
+        default:"pending"
+    },
+   createdAt:{ 
+     type: Date,
+     default: Date.now 
+    },
+   expiryDate:{ 
+    type: Date 
+    } ,
+>>>>>>> fbe4f84 (Fixing Recruiter APIs)
     candidatesApplied:{
         type:[{ type: mongoose.Schema.Types.ObjectId, ref: "User" ,default:null}],
     },
@@ -79,7 +92,12 @@ const jobSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     default: null
+<<<<<<< HEAD
 }]
+=======
+}],
+
+>>>>>>> fbe4f84 (Fixing Recruiter APIs)
     
 },{ timestamps: true })
 

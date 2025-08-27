@@ -15,8 +15,13 @@
 
 
 const mongoose = require("mongoose");
+<<<<<<< HEAD
 const mongodbUrl = "mongodb+srv://ExpertzCareers:Aakash1122@cluster0.klxjm43.mongodb.net/ExpertzCareerDB?retryWrites=true&w=majority&appName=Cluster0";
 
+=======
+require("dotenv").config();
+const mongodbUrl = process.env.database;
+>>>>>>> fbe4f84 (Fixing Recruiter APIs)
 
 mongoose
   .connect(mongodbUrl)

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // const jwt = require("jsonwebtoken");
 // const jwtMiddleWare = (req, res, next) => {
 
@@ -26,6 +27,8 @@
 
 
 
+=======
+>>>>>>> fbe4f84 (Fixing Recruiter APIs)
 
 const jwt = require("jsonwebtoken");
 
