@@ -50,31 +50,31 @@ router.post("/login", async (req, res) => {
   }
 })
 
-// router.put("/update",jwtMiddleWare,async (req,res)=>{
-// try{
-//   const userId=req.jwtPayload.id
-//   const userUpdatedData=req.body
+router.put("/update", jwtMiddleWare, async (req, res) => {
+  try {
+    const userId = req.jwtPayload.id
+    const userUpdatedData = req.body
 
-//   const response = await User.findOneAndUpdate(
-//   { _id: userId },             
-//   userUpdatedData,             
-//   {
-//     new: true,                 
-//     runValidators: true        
-//   }
-// )
-//   if(!response){
-//     return res.status(404).json({msg:"User Not Found!"})
-//   }
-//   console.log("User Update Succssfully");  
-//   return res.status(200).json({msg:"User Update Succssfully",UpdatedData:response})
-// }
-// catch(e){
-//  console.log("error",e);
-//  return res.status(500).json({msg:"Internal Server Error"})
+    const response = await User.findOneAndUpdate(
+      { _id: userId },
+      userUpdatedData,
+      {
+        new: true,
+        runValidators: true
+      }
+    )
+    if (!response) {
+      return res.status(404).json({ msg: "User Not Found!" })
+    }
+    console.log("User Update Succssfully");
+    return res.status(200).json({ msg: "User Update Succssfully", UpdatedData: response })
+  }
+  catch (e) {
+    console.log("error", e);
+    return res.status(500).json({ msg: "Internal Server Error" })
 
-//  }
-// });
+  }
+});
 
 //  router.delete("/dlt",jwtMiddleWare,async(req,res)=>{
 //   try{
