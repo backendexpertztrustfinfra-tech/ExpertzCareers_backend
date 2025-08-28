@@ -60,6 +60,9 @@ router.get("/getalllivejobs", async (req, res) => {
 }
 );
 
+
+
+
 // get save job by jobseeker
 router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
     try {
@@ -112,6 +115,23 @@ router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
+
+
+router.get("/getjobseekerprofile", jwtMiddleWare, async (req, res) => {
+    try {
+        const userId = req.jwtPayload.id;
+        const user = await User.findById(userId).select("-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        return res.status(200).json({ message: "User profile fetched successfully", user });
+
+    } catch (e) {
+        console.log("error", e);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+})
 
 
 
