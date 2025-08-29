@@ -5,6 +5,7 @@ const UserSchema = mongoose.Schema({
   username: {
     type: String, default: null
   },
+
   useremail: {
     type: String, default: null
   },
@@ -25,16 +26,37 @@ const UserSchema = mongoose.Schema({
   qualification: {
     type: String
   },
-  number: {
+  phonenumber: {
     type: String
   },
   designation: {
     type: String, default: null
   },
+  location: { type: String, default: null },
+  introvideo: {
+    type: String,
+    default: null
+  },
+
   yearsofExperience: {
     type: String,
     default: null
   },
+  projectlink: {
+    type: String,
+    default: null
+  },
+
+  certificationlink: {
+    type: String,
+    default: null
+  },
+
+  portfioliolink: {
+    type: String,
+    default: null
+  },
+
   previousCompany: {
     type: String, default: null
   },
@@ -54,20 +76,20 @@ const UserSchema = mongoose.Schema({
     type: String, default: null,
     enum: ["Proprietorship", "Partnership", "OPC", "LLP", "PVT LTD", "LTD"]
   },
+
+
   recruterGstIn: {
     type: String,
     default: null
   },
-  // recruterDoyouhaveaGSTNumber:{
-  //     type:String,
-  //      enum:["yes","no"]
-  // }
+
   recruterCompanyAddress: {
     type: String, default: null
   },
-  recruterLogo: {
+  profilphoto: {
     type: String, default: null
   },
+
   recruterIndustry: {
     type: String, default: null
   },

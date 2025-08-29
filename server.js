@@ -4,6 +4,7 @@ const app = express();
 const db = require("./config/db");
 const bodyParser = require("body-parser");
 require("./cronJobs");
+const path = require('path');
 require("dotenv").config();
 app.use(bodyParser.json());
 
@@ -13,6 +14,10 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
 
 
 app.use(cors(corsOptions));
