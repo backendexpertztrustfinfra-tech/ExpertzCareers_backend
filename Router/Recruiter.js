@@ -5,6 +5,19 @@ const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
 const { jobStatusMiddleware } = require("../middleware/jobStatusMiddleware");
+const upload = require('../middleware/imageUploadMiddle');
+const Plans = require("../model/Plan/PlansSchema")
+const Subscription = require("../model/Subscriptions/SubscriptionSchema")
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+const Payments = require("../model/Payments/PaymentsSchema")
+require("dotenv").config();
+
+const razorpay = new Razorpay({
+    key_id: process.env.API_KEY,
+    key_secret: process.env.API_SECRET
+});
+
 
 // create a job 
 
@@ -275,6 +288,238 @@ router.put("/updateRecruiterProfile", jwtMiddleWare, async (req, res) => {
         console.log("error", e);
         return res.status(500).json({ msg: "Internal Server Error" })
 
+    }
+});
+
+
+
+
+router.get("/getallAppliedCandidatees", jwtMiddleWare, async (req, res) => {
+    try {
+        const userId = req.jwtPayload.id;
+        const jobs = await Jobs.find({ jobCreatedby: userId })
+        if (!jobs) {
+            return res.status(404).json({ message: "No jobs found" });
+        }
+        let allCandidates = [];
+        jobs.forEach(job => {
+            allCandidates = [...allCandidates, ...job.candidatesApplied]
+        })
+
+        return res.status(200).json({
+            message: "All Applied Candidates fetched successfully",
+            candidates: allCandidates.length
+        });
+
+    } catch (e) {
+        console.log("error", e);
+        return res.status(500).json({ msg: "Internal Server Error" })
+    }
+
+})
+
+
+router.post("/createplan", async (req, res) => {
+    try {
+        const planData = req.body;
+
+        const newPlan = new Plans(planData)
+        const savedPlan = await newPlan.save();
+        return res.status(201).json({ msg: "Plan created successfully", plan: savedPlan })
+
+    } catch (e) {
+        console.log("error", e);
+        return res.status(500).json({ msg: "Internal Server Error" })
+    }
+})
+
+// router.post("/buyplan", jwtMiddleWare, async (req, res) => {
+//     try {
+//         const userId = req.jwtPayload.id;
+//         const { planName } = req.body;
+//         const plan = await Plans.findOne({ planName: planName });
+//         if (!plan) {
+//             return res.status(404).json({ msg: "Plan Not Found!" })
+//         }
+//         const user = await User.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ msg: "User Not Found!" })
+//         }
+
+
+//         await Subscription.updateMany(
+//             { recruiterId: userId, isActive: true },
+//             { $set: { isActive: false } }
+//         );
+
+
+//         const startDate = new Date();
+//         const endDate = new Date();
+//         endDate.setDate(startDate.getDate() + plan.durationInDays);
+
+
+//         const subscription = new Subscription({
+//             recruiterId: userId,
+//             planId: plan._id,
+//             startDate: startDate,
+//             endDate: endDate,
+//             jobsPosted: 0,
+//             jobPostLimit: plan.jobPostLimit,
+//             isActive: true
+//         });
+//         const savedSubscription = await subscription.save();
+//         return res.status(201).json({ msg: "Plan Purchased Successfully!", subscription: savedSubscription })
+
+//     } catch (e) {
+//         console.log("error", e);
+//         return res.status(500).json({ msg: "Internal Server Error" })
+//     }
+// })
+
+router.post('/create-order', jwtMiddleWare, async (req, res) => {
+    const { amount } = req.body;
+    const userId = req.jwtPayload.id;
+
+    const options = {
+        amount: amount * 100,
+        currency: 'INR',
+        receipt: `rcptid_${Date.now()}`,
+        payment_capture: 1
+    };
+
+    try {
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ msg: "User Not Found!" })
+        }
+
+        const order = await razorpay.orders.create(options);
+
+        console.log("Order Created Succefuly")
+
+        res.json({
+            order_id: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            userDetails: {
+                name: user.username,
+                email: user.useremail,
+                contact: user.phonenumber || "9999999999" // fallback number if null
+            }
+        });
+
+    } catch (err) {
+        console.error("Razorpay Order Creation Error:", err);
+        res.status(500).send("Order creation failed");
+    }
+});
+
+
+
+
+router.get("/getActiveSubscription", jwtMiddleWare, async (req, res) => {
+    try {
+
+        const userId = req.jwtPayload.id;
+        const activeSubscription = await Subscription.findOne({ recruiterId: userId, isActive: true })
+        if (!activeSubscription) {
+            return res.status(404).json({ msg: "No Active Subscription Found!" })
+        }
+
+        return res.status(200).json({ msg: "Active Subscription Fetched Successfully!", subscription: activeSubscription })
+
+    } catch (e) {
+        console.log("error", e);
+        return res.status(500).json({ msg: "Internal Server Error" })
+    }
+})
+
+
+router.post("/payment-success", jwtMiddleWare, async (req, res) => {
+    try {
+        const userId = req.jwtPayload.id;
+        const { payment_id, order_id, signature, planName, amount } = req.body;
+
+        var amountInRupees = amount / 100
+
+        //  Signature verification
+        const generated_signature = crypto
+            .createHmac("sha256", process.env.API_SECRET)
+            .update(order_id + "|" + payment_id)
+            .digest("hex");
+
+        if (generated_signature !== signature) {
+            return res.status(400).json({ success: false, message: "Invalid signature" });
+        }
+
+        const plan = await Plans.findOne({ planName: planName });
+        if (!plan) {
+            return res.status(404).json({ msg: "Plan Not Found!" })
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ msg: "User Not Found!" })
+        }
+
+
+        await Subscription.updateMany(
+            { recruiterId: userId, isActive: true },
+            { $set: { isActive: false } }
+        );
+
+
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(startDate.getDate() + plan.durationInDays);
+
+
+        const subscription = new Subscription({
+            recruiterId: userId,
+            planId: plan._id,
+            startDate: startDate,
+            endDate: endDate,
+            jobsPosted: 0,
+            jobPostLimit: plan.jobPostLimit,
+            isActive: true
+        });
+
+        const savedSubscription = await subscription.save();
+
+        // return res.status(201).json({ msg: "Plan Purchased Successfully!", subscription: savedSubscription })
+
+
+        const payment = new Payments({
+            userId: userId,
+            subscriptionId: subscription._id,
+            amount: amountInRupees,
+            transactionId: payment_id,
+            status: "completed",
+            paymentDate: startDate,
+
+        });
+
+
+        await payment.save();
+
+        // const user = await Users.findById(userId);
+        // const ant=amount / 100;
+        // const date=new Date();
+
+        //     await sendEmail(user.email, 'Payment Successful - ILAMED', `<h1>Hi ${user.username},</h1><p>Thank you for your payment!</p><p>Your transaction has been completed successfully.</p><h3>Payment Details:</h3><ul>
+        //       <li><strong>Amount Paid:</strong> ₹${ant}</li>
+        //       <li><strong>Payment ID:</strong> ${payment_id}</li>
+        //       <li><strong>Date:</strong> ${date}</li>
+        //     </ul><p>You can now access your purchased course/content.</p>
+        //    <p>If you have any questions, feel free to reach out to us at <a href="mailto:info@ilamed.org">support@ilamed.com</a>.</p>
+        //    <p>Thanks,<br>The ILAMED Team</p>`);
+
+        res.json({ success: true, message: "Payment Done" });
+
+    } catch (err) {
+        console.error("Payment success error:", err);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 });
 

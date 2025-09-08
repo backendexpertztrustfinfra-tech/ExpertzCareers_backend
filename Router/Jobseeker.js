@@ -164,7 +164,7 @@ router.put("/updateProfile", jwtMiddleWare, upload.fields([
             return res.status(404).json({ error: "User Not Found!" });
         }
 
-        return res.status(200).json({ message: "Profile Updated Successfully" });
+        return res.status(200).json({ message: "Profile Updated Successfully", res: response });
 
     } catch (e) {
         console.log("error", e);

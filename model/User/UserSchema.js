@@ -95,10 +95,12 @@ const UserSchema = mongoose.Schema({
   },
   savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
   savedCandidates: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }],
+
+  
 })
 
 UserSchema.pre("save", async function (next) {
-  const user = this; // ✅ 'this' refers to the document
+  const user = this; 
   if (!user.isModified("password"))
     return next();
   try {

@@ -1,96 +1,96 @@
 const mongoose = require("mongoose")
 
 const jobSchema = mongoose.Schema({
-    jobTitle:{
-        type:String
+    jobTitle: {
+        type: String
     },
-     jobCategory:{
-        type:String
+    jobCategory: {
+        type: String
     },
-    jobCreatedby:{
-         type: mongoose.Schema.Types.ObjectId,
-          ref: "User" ,
-         default:null
-        },
-      description:{
-          type:String
-      },
-     noofOpening:{
-        type:String
+    jobCreatedby: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
     },
-     jobType:{
-        type:String
+    description: {
+        type: String
     },
-     location:{
-        type:String
+    noofOpening: {
+        type: String
     },
-     address:{
-        type:String
+    jobType: {
+        type: String
     },
-    gender:{
-        type:String
+    location: {
+        type: String
     },
-    Qualification:{
-        type:String
+    address: {
+        type: String
     },
-    totalExperience:{
-        type:String
+    gender: {
+        type: String
     },
-    relevantExperience:{
-        type:String
+    Qualification: {
+        type: String
     },
-    SalaryIncentive:{
-        type:String
+    totalExperience: {
+        type: String
     },
-    jobBenefits:{
-        type:String
+    relevantExperience: {
+        type: String
     },
-    jobSkills:{
-        type:String
+    SalaryIncentive: {
+        type: String
     },
-    documentRequired:{
-        type:String
+    jobBenefits: {
+        type: String
     },
-    timing:{
-        type:String
+    jobSkills: {
+        type: String
     },
-    shift:{
-        type:String
+    documentRequired: {
+        type: String
     },
-    workingDays:{
-        type:String
+    timing: {
+        type: String
     },
-    weekend:{
-        type:String
+    shift: {
+        type: String
     },
-    status:{
-        type:String,
-        enum:["pending","live","close"],
-        default:"pending"
+    workingDays: {
+        type: String
     },
-   createdAt:{ 
-     type: Date,
-     default: Date.now 
+    weekend: {
+        type: String
     },
-   expiryDate:{ 
-    type: Date 
-    } ,
-    candidatesApplied:{
-        type:[{ type: mongoose.Schema.Types.ObjectId, ref: "User" ,default:null}],
+    status: {
+        type: String,
+        enum: ["pending", "live", "close"],
+        default: "pending"
     },
-    
-    ClosedDate:{
-        type:String,
-        default:null
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    expiryDate: {
+        type: Date
+    },
+    candidatesApplied: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }],
+    },
+
+    ClosedDate: {
+        type: String,
+        default: null
     },
     savedCandidates: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    default: null
-}],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    }],
 
-    
-},{ timestamps: true })
 
-const Jobs = mongoose.model("Job",jobSchema)
-module.exports=Jobs
+}, { timestamps: true })
+
+const Jobs = mongoose.model("Job", jobSchema)
+module.exports = Jobs
