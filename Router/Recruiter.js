@@ -551,7 +551,7 @@ router.get("/dbpointUser", jwtMiddleWare, async (req, res) => {
         }
         const allowedPoints = activeSubscription.dbPoints || 0;
 
-        const dbUsers = await User.find({})
+        const dbUsers = await User.find({ usertype: "jobseeker" })
             .select(
                 "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry"
             ).limit(allowedPoints);;
