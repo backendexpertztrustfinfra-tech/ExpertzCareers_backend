@@ -5,6 +5,7 @@ const plansSchema = mongoose.Schema({
     price: { type: Number, required: true },
     durationInDays: { type: Number, required: true },
     jobPostLimit: { type: Number, required: true },
+    dbPoints: { type: Number, required: true },
 });
 
 

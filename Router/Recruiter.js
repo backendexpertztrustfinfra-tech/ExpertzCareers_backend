@@ -482,6 +482,7 @@ router.post("/payment-success", jwtMiddleWare, async (req, res) => {
             endDate: endDate,
             jobsPosted: 0,
             jobPostLimit: plan.jobPostLimit,
+            dbPoints: plan.dbPoints,
             isActive: true
         });
 
@@ -524,6 +525,7 @@ router.post("/payment-success", jwtMiddleWare, async (req, res) => {
 });
 
 
+
 router.get("/getPaymentHistory", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
@@ -537,6 +539,29 @@ router.get("/getPaymentHistory", jwtMiddleWare, async (req, res) => {
         console.log("error", e);
         return res.status(500).json({ msg: "Internal Server Error" })
     }
+})
+
+
+router.get("/dbpointUser", jwtMiddleWare, async (req, res) => {
+    try {
+        const userId = req.jwtPayload.id;
+        const activeSubscription = await Subscription.findOne({ recruiterId: userId, isActive: true })
+        if (!activeSubscription) {
+            return res.status(404).json({ msg: "No Active Subscription Found!" })
+        }
+        const allowedPoints = activeSubscription.dbPoints || 0;
+        const dbUsers = await User.find({ _id: { $in: activeSubscription.dbPoints } }).select("-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry").limit(allowedPoints);
+
+        if (!dbUsers) {
+            return res.status(404).json({ msg: "No Users Found!" })
+        }
+        return res.status(200).json({ msg: "DB Users Fetched Successfully!", users: dbUsers })
+
+    } catch (e) {
+        console.log("error", e);
+        return res.status(500).json({ msg: "Internal Server Error" })
+    }
+
 })
 
 
