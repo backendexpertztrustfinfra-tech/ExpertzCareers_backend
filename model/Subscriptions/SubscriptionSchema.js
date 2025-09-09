@@ -7,6 +7,7 @@ const subscriptionSchema = mongoose.Schema({
     endDate: { type: Date, required: true },
     jobsPosted: { type: Number, default: 0 },
     jobPostLimit: { type: Number, required: true },
+    dbPoints: { type: Number, required: true },
     isActive: { type: Boolean, default: true }
 });
 
