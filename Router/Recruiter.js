@@ -550,7 +550,11 @@ router.get("/dbpointUser", jwtMiddleWare, async (req, res) => {
             return res.status(404).json({ msg: "No Active Subscription Found!" })
         }
         const allowedPoints = activeSubscription.dbPoints || 0;
-        const dbUsers = await User.find({ _id: { $in: activeSubscription.dbPoints } }).select("-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry").limit(allowedPoints);
+
+        const dbUsers = await User.find({})
+            .select(
+                "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry"
+            ).limit(allowedPoints);;
 
         if (!dbUsers) {
             return res.status(404).json({ msg: "No Users Found!" })
