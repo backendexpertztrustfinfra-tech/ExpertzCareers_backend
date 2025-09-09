@@ -524,5 +524,21 @@ router.post("/payment-success", jwtMiddleWare, async (req, res) => {
 });
 
 
+router.get("/getPaymentHistory", jwtMiddleWare, async (req, res) => {
+    try {
+        const userId = req.jwtPayload.id;
+        const payments = await Payments.find({ userId: userId }).populate("subscriptionId")
+        if (!payments) {
+            return res.status(404).json({ msg: "No Payment History Found!" })
+        }
+        return res.status(200).json({ msg: "Payment History Fetched Successfully!", payments: payments })
+
+    } catch (e) {
+        console.log("error", e);
+        return res.status(500).json({ msg: "Internal Server Error" })
+    }
+})
+
+
 
 module.exports = router;
