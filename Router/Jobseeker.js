@@ -60,6 +60,23 @@ router.get("/getalllivejobs", async (req, res) => {
 }
 );
 
+router.get("/appliedjobs", jwtMiddleWare, async (req, res) => {
+    try {
+
+        const userId = req.jwtPayload.id;
+
+        const appliedJobs = await Jobs.find({ candidatesApplied: userId }).select('-jobCreatedby -candidatesApplied -savedCandidates');
+        if (!appliedJobs || appliedJobs.length === 0) {
+            return res.status(404).json({ message: "No applied jobs found" });
+        }
+        return res.status(200).json({ message: "Applied jobs fetched successfully", appliedJobs: appliedJobs });
+    } catch (error) {
+        console.error("Error fetching applied jobs:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+
 
 
 
@@ -89,6 +106,48 @@ router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
     }
 });
 
+
+
+router.delete("/removesavedjob/:jobId", jwtMiddleWare, async (req, res) => {
+    try {
+        const userId = req.jwtPayload.id; // ✅ Correct from JWT
+        const jobId = req.params.jobId;
+        // Find the user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+
+
+        const job = await Jobs.findById(jobId);
+
+        if (!job) {
+            return res.status(404).json({ message: "Job not found" });
+        }
+
+
+
+        if (!user.savedJobs.includes(jobId)) {
+            return res.status(400).json({ message: "Job is not saved" });
+        }
+
+
+        user.savedJobs = user.savedJobs.filter(savedJobId => savedJobId.toString() !== jobId);
+        await user.save();
+
+
+        return res.status(200).json({
+            message: "Job removed from saved jobs successfully",
+            savedJobs: user.savedJobs
+        });
+
+
+    } catch (error) {
+        console.error("Error removing saved job:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 
 
 router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {

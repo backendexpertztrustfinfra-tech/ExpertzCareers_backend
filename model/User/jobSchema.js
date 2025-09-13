@@ -7,6 +7,9 @@ const jobSchema = mongoose.Schema({
     jobCategory: {
         type: String
     },
+    companyName: {
+        type: String
+    },
     jobCreatedby: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
