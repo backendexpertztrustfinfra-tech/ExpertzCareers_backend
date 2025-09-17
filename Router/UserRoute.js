@@ -12,7 +12,14 @@ const Subscription = require("../model/Subscriptions/SubscriptionSchema")
 router.post("/signup", async (req, res) => {
   try {
     const data = req.body;
-    // console.log("UsernAME:",data.username)
+    //
+    const existingUseEmail = await User.findOne({ email: data.email });
+
+    if (existingUseEmail) {
+      return res.status(400).json({ error: "Email already exists!" });
+    }
+
+
     const newUser = new User(data);
     const response = await newUser.save();
 
@@ -357,14 +364,14 @@ router.put("/update", jwtMiddleWare, async (req, res) => {
 // });
 
 
-router.post("/invterview", jwtMiddleWare, async (req, res) => {
-  try {
+// router.post("/invterview", jwtMiddleWare, async (req, res) => {
+//   try {
 
-  } catch (e) {
-    console.log("Error in interview", e)
-  }
+//   } catch (e) {
+//     console.log("Error in interview", e)
+//   }
 
-})
+// })
 
 
 module.exports = router;
