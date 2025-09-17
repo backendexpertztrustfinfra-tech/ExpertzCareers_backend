@@ -78,7 +78,9 @@ const UserSchema = mongoose.Schema({
     type: String, default: null,
     enum: ["Proprietorship", "Partnership", "OPC", "LLP", "PVT LTD", "LTD"]
   },
-
+  recruterCompanyDoc: {
+    type: String, default: null
+  },
 
   recruterGstIn: {
     type: String,

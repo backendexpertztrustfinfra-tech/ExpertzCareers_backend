@@ -265,10 +265,21 @@ router.get("/getRecruiterProfile", jwtMiddleWare, async (req, res) => {
 });
 
 
-router.put("/updateRecruiterProfile", jwtMiddleWare, async (req, res) => {
+router.put("/updateRecruiterProfile", upload.fields([
+    { name: "profilphoto", maxCount: 1 }, // ek photo
+    { name: "recruterCompanyDoc", maxCount: 1 } // multiple documents allow
+]), jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id
         const userUpdatedData = req.body
+
+
+        if (req.files["profilphoto"] && req.files["profilphoto"][0]) {
+            userUpdatedData.profilphoto = `/uploads/${req.files["profilphoto"][0].filename}`;
+        }
+        if (req.files["recruterCompanyDoc"] && req.files["recruterCompanyDoc"][0]) {
+            userUpdatedData.recruterCompanyDoc = `/uploads/${req.files["recruterCompanyDoc"][0].filename}`;
+        }
 
         const response = await User.findOneAndUpdate(
             { _id: userId },
@@ -282,7 +293,7 @@ router.put("/updateRecruiterProfile", jwtMiddleWare, async (req, res) => {
             return res.status(404).json({ msg: "User Not Found!" })
         }
         console.log("User Update Succssfully");
-        return res.status(200).json({ msg: "User Update Succssfully", UpdatedData: response })
+        return res.status(200).json({ msg: "User Update Succssfully" })
     }
     catch (e) {
         console.log("error", e);
@@ -567,6 +578,10 @@ router.get("/dbpointUser", jwtMiddleWare, async (req, res) => {
     }
 
 })
+
+
+
+
 
 
 
