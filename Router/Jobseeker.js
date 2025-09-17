@@ -86,7 +86,15 @@ router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
         const userId = req.jwtPayload.id; // ✅ Correct from JWT
 
         // Find the user and populate saved jobs
-        const user = await User.findById(userId).populate("savedJobs");
+        const user = await User.findById(userId).populate({
+            path: "savedJobs",
+            select: "-jobCreatedby -candidatesApplied -savedCandidates"
+        })
+
+
+
+
+
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }

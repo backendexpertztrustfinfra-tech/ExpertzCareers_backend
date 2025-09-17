@@ -5,6 +5,8 @@ const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const Test = require("../model/User/TestSchema")
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
+const Plans = require("../model/Plan/PlansSchema")
+const Subscription = require("../model/Subscriptions/SubscriptionSchema")
 
 
 router.post("/signup", async (req, res) => {
@@ -16,6 +18,31 @@ router.post("/signup", async (req, res) => {
 
     const jwtPayload = { id: response.id, email: response.email };
     const token = generateToken(jwtPayload)
+
+    if (response.usertype === "recruter") {
+      const plan = await Plans.findOne({ planName: "Free Plan" });
+
+      if (plan) {
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(startDate.getDate() + plan.durationInDays);
+
+
+        const subscription = new Subscription({
+          recruiterId: response._id,
+          planId: plan._id,
+          startDate: startDate,
+          endDate: endDate,
+          jobsPosted: 0,
+          jobPostLimit: plan.jobPostLimit,
+          dbPoints: plan.dbPoints,
+          isActive: true
+        });
+
+        const savedSubscription = await subscription.save();
+        console.log("Subscription created:", savedSubscription);
+      }
+    }
 
     console.log("user signup sucessful from bACKEND");
     return res.status(200).json({
@@ -330,6 +357,14 @@ router.put("/update", jwtMiddleWare, async (req, res) => {
 // });
 
 
+router.post("/invterview", jwtMiddleWare, async (req, res) => {
+  try {
+
+  } catch (e) {
+    console.log("Error in interview", e)
+  }
+
+})
 
 
 module.exports = router;
