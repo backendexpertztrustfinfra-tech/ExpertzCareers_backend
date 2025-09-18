@@ -35,7 +35,6 @@ router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
 
         return res.status(200).json({
             message: "Job saved successfully",
-            savedJobs: user.savedJobs
         });
     } catch (error) {
         console.error("Error saving job:", error);
@@ -145,10 +144,7 @@ router.delete("/removesavedjob/:jobId", jwtMiddleWare, async (req, res) => {
         await user.save();
 
 
-        return res.status(200).json({
-            message: "Job removed from saved jobs successfully",
-            savedJobs: user.savedJobs
-        });
+        return res.status(200).json({ message: "Job removed from saved jobs successfully" });
 
 
     } catch (error) {

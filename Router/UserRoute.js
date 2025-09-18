@@ -61,6 +61,9 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+
+
+
 router.post("/login", async (req, res) => {
   try {
     const data = req.body
@@ -83,6 +86,10 @@ router.post("/login", async (req, res) => {
     console.log("error", e);
   }
 })
+
+
+
+
 
 router.put("/update", jwtMiddleWare, async (req, res) => {
   try {
@@ -372,6 +379,26 @@ router.put("/update", jwtMiddleWare, async (req, res) => {
 //   }
 
 // })
+
+
+router.get("/finduser/:useremail", async (req, res) => {
+  try {
+
+    const usermail = req.params.useremail;
+
+    const response = await User.findOne({ useremail: usermail }).select("-password")
+    if (!response) {
+      console.log("User Not Found!")
+      return res.status(404).json({ msg: "User Not Found!" })
+    }
+    return res.status(200).json({ user: response });
+  } catch (e) {
+    console.log("Error", e)
+    return res.status(500).json({ msg: "Internal Server Error" })
+
+  }
+
+});
 
 
 module.exports = router;
