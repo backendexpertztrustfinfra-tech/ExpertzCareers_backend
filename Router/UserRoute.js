@@ -386,12 +386,12 @@ router.get("/finduser/:useremail", async (req, res) => {
 
     const usermail = req.params.useremail;
 
-    const response = await User.findOne({ useremail: usermail }).select("-password")
+    const response = await User.findOne({ useremail: usermail })
     if (!response) {
       console.log("User Not Found!")
-      return res.status(404).json({ msg: "User Not Found!" })
+      return res.status(404).json({ userFound: false })
     }
-    return res.status(200).json({ user: response });
+    return res.status(200).json({ userFound: true });
   } catch (e) {
     console.log("Error", e)
     return res.status(500).json({ msg: "Internal Server Error" })
