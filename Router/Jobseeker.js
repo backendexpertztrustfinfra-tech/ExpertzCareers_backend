@@ -90,10 +90,6 @@ router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
             select: "-jobCreatedby -candidatesApplied -savedCandidates"
         })
 
-
-
-
-
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -184,7 +180,7 @@ router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {
 router.get("/getjobseekerprofile", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
-        const user = await User.findById(userId).select("-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry");
+        const user = await User.findById(userId).select("-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs -savedCandidates");
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -198,14 +194,13 @@ router.get("/getjobseekerprofile", jwtMiddleWare, async (req, res) => {
 
 router.put("/updateProfile", jwtMiddleWare, upload.fields([
     { name: "profilphoto", maxCount: 1 }, // ek photo
-    { name: "resume", maxCount: 1 } // multiple documents allow
+    { name: "resume", maxCount: 1 },// multiple documents allow
+    { name: "introvideo", maxCount: 1 }
 ]), async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
         const updateddata = req.body
-
         //console.log("Request Data:", updateddata);
-
         if (req.files["profilphoto"] && req.files["profilphoto"][0]) {
             updateddata.profilphoto = `/uploads/${req.files["profilphoto"][0].filename}`;
         }
@@ -214,7 +209,14 @@ router.put("/updateProfile", jwtMiddleWare, upload.fields([
             updateddata.resume = `/uploads/${req.files["resume"][0].filename}`;
         }
 
+        if (req.files["introvideo"] && req.files["introvideo"][0]) {
+            updateddata.introvideo = `/uploads/${req.files["introvideo"][0].filename}`;
+        }
+
+
         if (!userId) return res.status(400).json({ error: "Invalid Token Data" });
+
+
         //console.log("Extracted User ID:", userId);
 
 

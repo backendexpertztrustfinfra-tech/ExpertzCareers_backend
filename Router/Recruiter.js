@@ -265,6 +265,7 @@ router.get("/getRecruiterProfile", jwtMiddleWare, async (req, res) => {
 });
 
 
+
 router.put("/updateRecruiterProfile", upload.fields([
     { name: "profilphoto", maxCount: 1 }, // ek photo
     { name: "recruterCompanyDoc", maxCount: 1 } // multiple documents allow
@@ -301,7 +302,6 @@ router.put("/updateRecruiterProfile", upload.fields([
 
     }
 });
-
 
 
 
