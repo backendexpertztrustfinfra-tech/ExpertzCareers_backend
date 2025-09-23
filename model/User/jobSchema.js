@@ -71,6 +71,12 @@ const jobSchema = mongoose.Schema({
         enum: ["pending", "live", "close"],
         default: "pending"
     },
+
+    appliedstatus: {
+        type: String,
+        default: null
+    },
+
     createdAt: {
         type: Date,
         default: Date.now

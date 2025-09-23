@@ -25,11 +25,13 @@ const userRoutes = require("./Router/UserRoute");
 const JobRoutes = require("./Router/JobRouter");
 const RecruiterRoutes = require("./Router/Recruiter")
 const JobseekerRoutes = require("./Router/Jobseeker")
+const Notification = require("./Router/Notification")
 
 app.use("/recruiter", RecruiterRoutes)
 app.use("/jobseeker", JobseekerRoutes)
 app.use("/user", userRoutes);
 app.use("/job", JobRoutes);
+app.use("/notification", Notification);
 app.listen(3000, () => {
   console.log(`Server is Running http://localhost:3000`);
 });

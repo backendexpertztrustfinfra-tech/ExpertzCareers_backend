@@ -166,7 +166,10 @@ router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {
         }
         // Apply
         job.candidatesApplied.push(userId);
+        job.appliedstatus = "Applied";
+
         await job.save();
+
 
         return res.status(200).json({ message: "Applied Successfully!" });
     } catch (e) {
@@ -213,12 +216,7 @@ router.put("/updateProfile", jwtMiddleWare, upload.fields([
             updateddata.introvideo = `/uploads/${req.files["introvideo"][0].filename}`;
         }
 
-
         if (!userId) return res.status(400).json({ error: "Invalid Token Data" });
-
-
-        //console.log("Extracted User ID:", userId);
-
 
         const response = await User.findByIdAndUpdate(userId, updateddata, {
             new: true,

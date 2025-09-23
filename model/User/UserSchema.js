@@ -16,7 +16,7 @@ const UserSchema = mongoose.Schema({
   },
   usertype: {
     type: String,
-    enum: ["jobseeker", "recruter"],
+    enum: ["jobseeker", "recruiter"],
     default: null
   },
   resume: {
