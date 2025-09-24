@@ -5,7 +5,7 @@ const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
 const upload = require("../middleware/imageUploadMiddle")
-const Notification = require("../model/Notifications/notificationschema");
+const Notification = require("../model/Notifications/NotificationSchema");
 
 
 router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
@@ -48,10 +48,9 @@ router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
                 description = "We regret to inform you that you have not been selected for the position. Keep applying!";
                 targetScreen = "ApplicationStatus";
                 break;
-
-
-
         }
+
+
         const notification = new Notification({
             userId: userId,
             title: title,
@@ -59,21 +58,18 @@ router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
             type: type,
             targetScreen: targetScreen
         });
+
         const savedNotification = await notification.save();
-        return res.status(201).json({ msg: "Notification created successfully", notification: savedNotification })
-
-
+        return res.status(201).json({ msg: "Notification created successfully", notification: savedNotification });
     } catch (e) {
         console.log("error", e);
         return res.status(500).json({ msg: "Internal Server Error" })
     }
 
-
 });
 
 router.get("/getnotifications", jwtMiddleWare, async (req, res) => {
     try {
-
         const userId = req.jwtPayload.id;
         const notifications = await Notification.find({ userId: userId }).sort({ createdAt: -1 });
         if (!notifications) {
@@ -81,9 +77,10 @@ router.get("/getnotifications", jwtMiddleWare, async (req, res) => {
         }
 
         return res.status(200).json({ notifications: notifications });
-    } catch (e) {
 
+    } catch (e) {
         console.log("error", e);
+
         return res.status(500).json({ msg: "Internal Server Error" })
     }
 

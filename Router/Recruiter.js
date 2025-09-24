@@ -11,7 +11,7 @@ const Subscription = require("../model/Subscriptions/SubscriptionSchema")
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payments = require("../model/Payments/PaymentsSchema")
-const Notification = require("../model/Notifications/notificationschema")
+
 require("dotenv").config();
 
 const razorpay = new Razorpay({
@@ -583,69 +583,6 @@ router.get("/dbpointUser", jwtMiddleWare, async (req, res) => {
 
 
 
-
-router.post("/createnotification", jwtMiddleWare, async (req, res) => {
-    try {
-        const type = req.body.type;
-        const userId = req.body.userId;
-        const jobId = req.body.jobId;
-        const recruiterId = req.jwtPayload.id;
-
-        if (!type || !userId) {
-            return res.status(400).json({ msg: "Type and UserId are required" })
-        }
-
-
-
-
-        let title;
-        let description;
-        let targetScreen;
-        let extraData;
-
-        switch (type) {
-            case "NEW_JOB":
-                title = "New Job Posted";
-                description = "A new job has been posted that matches your profile. Check it out!";
-                targetScreen = "JobDetails";
-                break;
-            case "VIEWED":
-                title = "Application Viewed";
-                description = "Your Application has been viewed by a recruiter.";
-                targetScreen = "ApplicationStatus";
-                break;
-            case "SHORTLISTED":
-                title = "You are Shortlisted";
-                description = "Congratulations! You have been shortlisted for a job. Prepare for the next steps.";
-                targetScreen = "ApplicationStatus";
-
-                break;
-            case "REJECTED":
-                title = "Application Update";
-                description = "We regret to inform you that you have not been selected for the position. Keep applying!";
-                targetScreen = "ApplicationStatus";
-                break;
-
-        }
-        const notification = new Notification({
-            userId: userId, // Replace with actual user ID
-            title: title,
-            description: description,
-            type: type,
-            targetScreen: targetScreen,
-            extraData: extraData
-        });
-        const savedNotification = await notification.save();
-        return res.status(201).json({ msg: "Notification created successfully", notification: savedNotification })
-
-
-    } catch (e) {
-        console.log("error", e);
-        return res.status(500).json({ msg: "Internal Server Error" })
-    }
-
-
-});
 
 
 
