@@ -18,8 +18,6 @@ const corsOptions = {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
-
-
 app.use(cors(corsOptions));
 const userRoutes = require("./Router/UserRoute");
 const JobRoutes = require("./Router/JobRouter");

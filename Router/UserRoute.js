@@ -135,9 +135,15 @@ router.post("/send-otp", async (req, res) => {
     user.otpExpires = otpExpires;
     await user.save();
     const text = `Your verification code is: ${otp}. It expires in 10 minutes.`;
-    await sendEmail({ to: user.useremail, subject: 'Your OTP code', text });
 
-    return res.status(200).json({ msg: "OTP sent to email" });
+    try {
+      await sendEmail({ to: user.useremail, subject: 'Your OTP code', text });
+      return res.status(200).json({ msg: "OTP sent to email" });
+    } catch (err) {
+      console.error('Error sending email:', err);
+      return res.status(500).json({ msg: 'Failed to send OTP email' });
+    }
+
   } catch (e) {
     console.log("error", e);
     return res.status(500).json({ msg: "Internal Server Error" })
