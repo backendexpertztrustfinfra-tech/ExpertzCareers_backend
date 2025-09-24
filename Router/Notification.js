@@ -8,8 +8,6 @@ const upload = require("../middleware/imageUploadMiddle")
 const Notification = require("../model/Notifications/notificationschema");
 
 
-
-
 router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
     try {
         const type = req.body.type;
@@ -22,7 +20,6 @@ router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
         let title;
         let description;
         let targetScreen;
-        let extraData;
 
         switch (type) {
             case "NEW_JOB":
@@ -45,6 +42,14 @@ router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
                 description = "We regret to inform you that you have not been selected for the position. Keep applying!";
                 targetScreen = "ApplicationStatus";
                 break;
+
+            case "APPLIED":
+                title = "Application Update";
+                description = "We regret to inform you that you have not been selected for the position. Keep applying!";
+                targetScreen = "ApplicationStatus";
+                break;
+
+
 
         }
         const notification = new Notification({

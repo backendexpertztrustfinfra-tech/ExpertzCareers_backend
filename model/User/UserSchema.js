@@ -5,7 +5,9 @@ const UserSchema = mongoose.Schema({
   username: {
     type: String, default: null
   },
-
+  otp: String,
+  otpExpires: Date,
+  isVerified: { type: Boolean, default: false },
   useremail: {
     type: String, default: null,
     unique: true,
@@ -110,7 +112,6 @@ UserSchema.pre("save", async function (next) {
   try {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);
-
     next();
   } catch (e) {
     next(e);

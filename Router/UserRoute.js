@@ -4,6 +4,8 @@ const mongoose = require('mongoose')
 const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const Test = require("../model/User/TestSchema")
+const bcrypt = require("bcrypt")
+const { sendEmail } = require("../utilitys/mailer")
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
 const Plans = require("../model/Plan/PlansSchema")
 const Subscription = require("../model/Subscriptions/SubscriptionSchema")
@@ -68,13 +70,17 @@ router.post("/login", async (req, res) => {
   try {
     const data = req.body
     const user = await User.findOne({ useremail: data.useremail })
+
     if (!user || !(await user.comparePassword(data.password))) {
       return res.status(401).json({ msg: "Invalid Email or Password" })
     }
+
     const jwtPayload = { id: user.id, email: user.email }
     const token = generateToken(jwtPayload)
     console.log("Login Sucessfull !");
+
     // res.status(200).json({ msg: "User Login Successfully!", token: token });
+
     console.log("User Loggin Success", user)
     return res.status(200).json({
       msg: "User Logging Sccessful", token: token, usertype: user.usertype,
@@ -86,8 +92,6 @@ router.post("/login", async (req, res) => {
     console.log("error", e);
   }
 })
-
-
 
 
 
@@ -116,6 +120,66 @@ router.put("/update", jwtMiddleWare, async (req, res) => {
 
   }
 });
+
+
+router.post("/send-otp", async (req, res) => {
+  try {
+    const { useremail } = req.body;
+    const user = await User.findOne({ useremail: useremail });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
+    const text = `Your verification code is: ${otp}. It expires in 10 minutes.`;
+    await sendEmail({ to: user.useremail, subject: 'Your OTP code', text });
+
+    return res.status(200).json({ msg: "OTP sent to email" });
+  } catch (e) {
+    console.log("error", e);
+    return res.status(500).json({ msg: "Internal Server Error" })
+  }
+})
+
+router.post('/verify-otp', async (req, res) => {
+  const { useremail, otp } = req.body;
+  const user = await User.findOne({ useremail: useremail });
+  if (!user || user.otp !== otp || user.otpExpires < Date.now())
+    return res.status(400).json({ msg: 'Invalid or expired OTP' });
+  user.isEmailVerified = true;
+  user.otp = undefined;
+  user.otpExpires = undefined;
+  await user.save();
+  res.json({ msg: 'OTP verified' });
+});
+
+
+
+router.put("/reset-password", async (req, res) => {
+  try {
+    const { useremail, newPassword } = req.body;
+    const user = await User.findOne({ useremail: useremail });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ msg: "Password reset successful" });
+
+  } catch (e) {
+    console.log("error", e);
+    return res.status(500).json({ msg: "Internal Server Error" })
+  }
+
+
+});
+
+
 
 //  router.delete("/dlt",jwtMiddleWare,async(req,res)=>{
 //   try{
