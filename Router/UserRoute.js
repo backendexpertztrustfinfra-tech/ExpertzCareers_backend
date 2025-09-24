@@ -5,10 +5,11 @@ const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const Test = require("../model/User/TestSchema")
 const bcrypt = require("bcrypt")
-const { sendEmail } = require("../utilitys/mailer")
+//const { sendEmail } = require("../utilitys/mailer")
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
 const Plans = require("../model/Plan/PlansSchema")
 const Subscription = require("../model/Subscriptions/SubscriptionSchema")
+const { sendEmail } = require("../utilitys/resend-mailer")
 
 
 router.post("/signup", async (req, res) => {
@@ -138,6 +139,8 @@ router.post("/send-otp", async (req, res) => {
 
     try {
       await sendEmail({ to: user.useremail, subject: 'Your OTP code', text });
+      //await sendEmail({ to: user.useremail, subject: 'Your OTP code', text });
+
       return res.status(200).json({ msg: "OTP sent to email" });
     } catch (err) {
       console.error('Error sending email:', err);
