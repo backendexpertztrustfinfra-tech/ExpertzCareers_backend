@@ -29,7 +29,7 @@ router.post("/signup", async (req, res) => {
     const jwtPayload = { id: response.id, email: response.email };
     const token = generateToken(jwtPayload)
 
-    if (response.usertype === "recruter") {
+    if (response.usertype === "recruter" || response.usertype === "recruiter") {
       const plan = await Plans.findOne({ planName: "Free Plan" });
 
       if (plan) {

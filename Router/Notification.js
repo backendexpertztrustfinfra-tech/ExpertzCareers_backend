@@ -8,18 +8,40 @@ const upload = require("../middleware/imageUploadMiddle")
 const Notification = require("../model/Notifications/NotificationSchema");
 
 
-router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
+router.post("/sentnotification", async (req, res) => {
     try {
         const type = req.body.type;
-        const userId = req.body.userId;
+        let userId = req.body.userId;
+        const extraData = req.body.extraData;
 
-        if (!type || !userId) {
+        if (!type) {
             return res.status(400).json({ msg: "Type and UserId are required" })
         }
 
         let title;
         let description;
         let targetScreen;
+        const jobId = extraData ? extraData.jobId : null;
+        const job = jobId ? await Jobs.findById({ _id: jobId }) : null;
+        const jobTitle = job ? job.jobTitle : null;
+        const jobSkillsArray = job && job.jobSkills ? job.jobSkills.split(",").map(s => s.trim()) : [];
+        //        console.log("jobSkillsArray", jobSkillsArray);
+
+
+        const skilledMatchUsers = await User.find({
+            usertype: "jobseeker",
+            $or: jobSkillsArray.map(skill => ({
+                Skill: { $regex: skill, $options: "i" } // case-insensitive match
+            }))
+        });
+
+        if (!userId) {
+            const matchedUserIds = skilledMatchUsers.map(user => user._id);
+            //console.log("matchedUserIds", matchedUserIds);
+            userId = matchedUserIds;
+        }
+
+
 
         switch (type) {
             case "NEW_JOB":
@@ -44,11 +66,12 @@ router.post("/sentnotification", jwtMiddleWare, async (req, res) => {
                 break;
 
             case "APPLIED":
-                title = "Application Update";
-                description = "We regret to inform you that you have not been selected for the position. Keep applying!";
-                targetScreen = "ApplicationStatus";
+                title = "Candidate Applied";
+                description = `candidate has applied for ${jobTitle}. Review their application.`;
+                targetScreen = "PostedJobs";
                 break;
         }
+
 
 
         const notification = new Notification({

@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 
 const notificationSchema = mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }],
     title: { type: String, required: true },
     description: { type: String, required: true },
     type: {
         type: String,
-        enum: ["VIEWED", "SHORTLISTED", "REJECTED", "MESSAGE", "NEW_JOB"],
+        enum: ["VIEWED", "SHORTLISTED", "REJECTED", "MESSAGE", "NEW_JOB", "APPLIED"],
         required: true
     },
     targetScreen: { type: String, required: true },
