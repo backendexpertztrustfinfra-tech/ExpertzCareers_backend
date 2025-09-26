@@ -79,7 +79,8 @@ router.post("/sentnotification", async (req, res) => {
             title: title,
             description: description,
             type: type,
-            targetScreen: targetScreen
+            targetScreen: targetScreen,
+            extraData: extraData
         });
 
         const savedNotification = await notification.save();

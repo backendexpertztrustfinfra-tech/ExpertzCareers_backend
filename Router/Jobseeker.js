@@ -64,11 +64,28 @@ router.get("/appliedjobs", jwtMiddleWare, async (req, res) => {
 
         const userId = req.jwtPayload.id;
 
-        const appliedJobs = await Jobs.find({ candidatesApplied: userId }).select('-jobCreatedby -candidatesApplied -savedCandidates');
+        const appliedJobs = await Jobs.find({
+            "candidatesApplied.userId": userId
+
+        }).select('-jobCreatedby -savedCandidates');
         if (!appliedJobs || appliedJobs.length === 0) {
             return res.status(404).json({ message: "No applied jobs found" });
         }
-        return res.status(200).json({ message: "Applied jobs fetched successfully", appliedJobs: appliedJobs });
+
+        const jobsWithStatus = appliedJobs.map(job => {
+            // Safe find with checks
+            const candidate = job.candidatesApplied.find(
+                c => c && c.userId && c.userId.toString() === userId.toString()
+            );
+
+            return {
+                ...job.toObject(),
+                applicationStatus: candidate ? candidate.status : null,
+                appliedAt: candidate ? candidate.appliedAt : null
+            };
+        });
+
+        return res.status(200).json({ message: "Applied jobs fetched successfully", appliedJobs: jobsWithStatus });
     } catch (error) {
         console.error("Error fetching applied jobs:", error);
         res.status(500).json({ message: "Internal Server Error" });
@@ -153,20 +170,27 @@ router.delete("/removesavedjob/:jobId", jwtMiddleWare, async (req, res) => {
 router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {
     try {
         const jobId = req.params.jobId;
-        const userId = req.jwtPayload.id;
+        const userId = req.jwtPayload?.id;
+        console.log("UserId:", userId, "Jo  bId:", jobId);
 
         const job = await Jobs.findById(jobId);
         if (!job) {
             return res.status(404).json({ message: "Job Not Found!" });
         }
 
-        // Check if already applied
-        if (job.candidatesApplied.includes(userId)) {
+
+        const alreadyApplied = job.candidatesApplied.find(
+            candidate => candidate.userId.equals(userId));
+
+        if (alreadyApplied) {
             return res.status(400).json({ message: "Already applied to this job" });
         }
-        // Apply
-        job.candidatesApplied.push(userId);
-        job.appliedstatus = "Applied";
+
+        job.candidatesApplied.push({
+            userId: userId,
+            status: "applied",
+            appliedAt: new Date(),
+        });
 
         await job.save();
 

@@ -84,9 +84,18 @@ const jobSchema = mongoose.Schema({
     expiryDate: {
         type: Date
     },
-    candidatesApplied: {
-        type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }],
-    },
+    candidatesApplied: [
+        {
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            status: {
+                type: String,
+                enum: ["applied", "shortlisted", "rejected", "hired"],
+                default: "applied"
+            },
+            appliedAt: { type: Date, default: Date.now } // optional: kab apply kiya
+        }
+    ]
+    ,
 
     ClosedDate: {
         type: String,

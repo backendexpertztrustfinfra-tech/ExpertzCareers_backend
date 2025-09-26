@@ -345,6 +345,32 @@ router.post("/createplan", async (req, res) => {
     }
 })
 
+
+router.put("/updateapplyjobstatus/:jobId", jwtMiddleWare, async (req, res) => {
+    try {
+        const jobId = req.params.jobId;
+        const { candidateId, status } = req.body;
+        const userId = req.jwtPayload.id;
+        const job = await Jobs.findOne({ _id: jobId, jobCreatedby: userId });
+        if (!job) {
+            return res.status(404).json({ msg: "Job Not Found!" })
+        }
+        const candidate = job.candidatesApplied.find(candidate => candidate.userId.equals(candidateId));;
+        if (!candidate) {
+            return res.status(404).json({ msg: "Candidate Not Found!" })
+        }
+        candidate.status = status;
+        await job.save();
+
+        return res.status(200).json({ msg: "Candidate status updated successfully", candidate: candidate })
+
+
+    } catch (e) {
+        console.log("error", e);
+        return res.status(500).json({ msg: "Internal Server Error" })
+    }
+})
+
 // router.post("/buyplan", jwtMiddleWare, async (req, res) => {
 //     try {
 //         const userId = req.jwtPayload.id;
