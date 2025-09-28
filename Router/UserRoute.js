@@ -10,17 +10,24 @@ const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddlewar
 const Plans = require("../model/Plan/PlansSchema")
 const Subscription = require("../model/Subscriptions/SubscriptionSchema")
 const { sendEmail } = require("../utilitys/resend-mailer")
+const validator = require("validator");
 
 
 router.post("/signup", async (req, res) => {
   try {
     const data = req.body;
+    if (!data.data.useremail || !validator.isEmail(data.data.useremail)) {
+      return res.status(400).json({ error: "Invalid Email!" });
+    }
+
+
     //
     const existingUseEmail = await User.findOne({ useremail: data.useremail });
 
     if (existingUseEmail) {
       return res.status(400).json({ error: "Email already exists!" });
     }
+
 
 
     const newUser = new User(data);
@@ -126,6 +133,11 @@ router.put("/update", jwtMiddleWare, async (req, res) => {
 router.post("/send-otp", async (req, res) => {
   try {
     const { useremail } = req.body;
+
+    if (!useremail || validator.isEmail(useremail)) {
+      return res.status(400).json({ msg: "Invalid Email" })
+    }
+
     const user = await User.findOne({ useremail: useremail });
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -187,6 +199,13 @@ router.put("/reset-password", async (req, res) => {
 
 
 });
+
+
+
+
+
+
+
 
 
 
@@ -458,6 +477,10 @@ router.get("/finduser/:useremail", async (req, res) => {
   try {
 
     const usermail = req.params.useremail;
+
+    if (!usermail || !validator.isEmail(usermail)) {
+      return res.status(400).json({ msg: "Invalid Email" })
+    }
 
     const response = await User.findOne({ useremail: usermail })
     if (!response) {
