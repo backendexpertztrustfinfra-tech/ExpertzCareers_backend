@@ -133,7 +133,7 @@ router.post("/send-otp", async (req, res) => {
   try {
     const { useremail } = req.body;
 
-    if (!useremail || validator.isEmail(useremail)) {
+    if (!useremail || !validator.isEmail(useremail)) {
       return res.status(400).json({ msg: "Invalid Email" })
     }
 
