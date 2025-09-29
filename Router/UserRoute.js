@@ -16,12 +16,10 @@ const validator = require("validator");
 router.post("/signup", async (req, res) => {
   try {
     const data = req.body;
-    if (!data.data.useremail || !validator.isEmail(data.data.useremail)) {
+    if (!data.useremail || !validator.isEmail(data.useremail)) {
       return res.status(400).json({ error: "Invalid Email!" });
     }
 
-
-    //
     const existingUseEmail = await User.findOne({ useremail: data.useremail });
 
     if (existingUseEmail) {
@@ -68,6 +66,7 @@ router.post("/signup", async (req, res) => {
     })
   } catch (e) {
     console.log("error", e);
+    return res.status(500).json({ msg: "Internal Server Error" })
   }
 });
 
