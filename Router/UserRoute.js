@@ -91,6 +91,7 @@ router.post("/login", async (req, res) => {
     console.log("User Loggin Success", user)
     return res.status(200).json({
       msg: "User Logging Sccessful", token: token, usertype: user.usertype,
+      varification: user.isVerified,
       username: user.username,
       useremail: user.useremail
     });
