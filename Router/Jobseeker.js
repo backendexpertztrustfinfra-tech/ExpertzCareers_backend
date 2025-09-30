@@ -7,7 +7,6 @@ const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddlewar
 const upload = require("../middleware/imageUploadMiddle")
 
 
-// Save a job by jobseeker
 router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id; // ✅ Correct field
@@ -251,7 +250,7 @@ router.put("/updateProfile", jwtMiddleWare, upload.fields([
             return res.status(404).json({ error: "User Not Found!" });
         }
 
-        return res.status(200).json({ message: "Profile Updated Successfully", res: response });
+        return res.status(200).json({ message: "Profile Updated Successfully" });
 
     } catch (e) {
         console.log("error", e);
