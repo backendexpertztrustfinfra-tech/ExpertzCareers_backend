@@ -169,7 +169,7 @@ router.post('/verify-otp', async (req, res) => {
   const user = await User.findOne({ useremail: useremail });
   if (!user || user.otp !== otp || user.otpExpires < Date.now())
     return res.status(400).json({ msg: 'Invalid or expired OTP' });
-  user.isEmailVerified = true;
+  user.isVerified = true;
   user.otp = undefined;
   user.otpExpires = undefined;
   await user.save();
