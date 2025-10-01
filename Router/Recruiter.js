@@ -58,10 +58,19 @@ router.get("/getapplieduser/:jobId", jwtMiddleWare, async (req, res) => {
     try {
         const jobId = req.params.jobId;
         const userId = req.jwtPayload.id;
-        const response = await Jobs.findOne({ _id: jobId, jobCreatedby: userId }).populate("candidatesApplied", "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry")
+        const response = await Jobs.findOne({
+            _id: jobId,
+            jobCreatedby: userId
+        })
+            .populate({
+                path: "candidatesApplied.userId",   // nested populate
+                select: "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry" // jo fields exclude karne hain
+            });
+
         if (!response) {
             return res.status(404).json({ message: "No candidated found!" });
         }
+
 
         return res.status(200).json({ candidatesApplied: response.candidatesApplied })
     }
