@@ -42,7 +42,7 @@ const UserSchema = mongoose.Schema({
     default: null
   },
 
-  yearsofExperience: {
+  Experience: {
     type: String,
     default: null
   },
@@ -61,12 +61,6 @@ const UserSchema = mongoose.Schema({
     default: null
   },
 
-  previousCompany: {
-    type: String, default: null
-  },
-  previousSalary: {
-    type: String, default: null
-  },
   salaryExpectation: {
     type: String, default: null
   },
