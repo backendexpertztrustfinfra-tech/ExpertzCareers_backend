@@ -41,7 +41,6 @@ const UserSchema = mongoose.Schema({
     type: String,
     default: null
   },
-
   Experience: {
     type: String,
     default: null
@@ -50,17 +49,14 @@ const UserSchema = mongoose.Schema({
     type: String,
     default: null
   },
-
   certificationlink: {
     type: String,
     default: null
   },
-
   portfioliolink: {
     type: String,
     default: null
   },
-
   salaryExpectation: {
     type: String, default: null
   },
@@ -94,9 +90,6 @@ const UserSchema = mongoose.Schema({
     type: String, default: null
   },
   savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
-  savedCandidates: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }],
-
-
 })
 
 UserSchema.pre("save", async function (next) {

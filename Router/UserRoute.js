@@ -93,7 +93,10 @@ router.post("/login", async (req, res) => {
       msg: "User Logging Sccessful", token: token, usertype: user.usertype,
       varification: user.isVerified,
       username: user.username,
-      useremail: user.useremail
+      useremail: user.useremail,
+      jobrole: user.designation,
+      companyName: user.recruterCompany
+
     });
   }
   catch (e) {

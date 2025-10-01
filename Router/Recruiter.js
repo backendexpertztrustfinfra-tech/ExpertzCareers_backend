@@ -64,7 +64,7 @@ router.get("/getapplieduser/:jobId", jwtMiddleWare, async (req, res) => {
         })
             .populate({
                 path: "candidatesApplied.userId",   // nested populate
-                select: "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry" // jo fields exclude karne hain
+                select: "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs" // jo fields exclude karne hain
             });
 
         if (!response) {
