@@ -90,6 +90,13 @@ const UserSchema = mongoose.Schema({
     type: String, default: null
   },
   savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
+  savedCandidates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  }],
+
+
 })
 
 UserSchema.pre("save", async function (next) {

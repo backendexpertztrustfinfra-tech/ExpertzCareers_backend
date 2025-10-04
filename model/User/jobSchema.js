@@ -101,11 +101,6 @@ const jobSchema = mongoose.Schema({
         type: String,
         default: null
     },
-    savedCandidates: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        default: null
-    }],
 
 
 }, { timestamps: true })
