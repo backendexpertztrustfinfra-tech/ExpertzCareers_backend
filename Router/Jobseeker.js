@@ -47,13 +47,20 @@ router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
 });
 
 
-router.get("/getalllivejobs", async (req, res) => {
+router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
 
     try {
-        const liveJobs = await Jobs.find({ status: "live" });
+        const userId = req.jwtPayload.id;
+
+        const liveJobs = await Jobs.find({
+            status: "live",
+            "candidatesApplied.userId": { $ne: userId } // userId candidatesApplied mein nahi hai
+        });
         if (!liveJobs || liveJobs.length === 0) {
             return res.status(404).json({ message: "No live jobs found" });
         }
+
+
         return res.status(200).json({ message: "Live jobs fetched successfully", liveJobs: liveJobs });
 
     } catch (e) {
