@@ -12,7 +12,7 @@ router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
         const userId = req.jwtPayload.id; // ✅ Correct field
         const jobId = req.params.jobId;
 
-        // Check if job exists
+
         const job = await Jobs.findById(jobId);
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
@@ -24,12 +24,17 @@ router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Prevent duplicate save
-        if (user.savedJobs.includes(jobId)) {
+        const alreadySaved = user.savedJobs.some(
+            (item) => item.job.toString() === jobId
+        );
+        if (alreadySaved) {
             return res.status(400).json({ message: "Job already saved" });
         }
 
-        user.savedJobs.push(jobId);
+        user.savedJobs.push({
+            job: jobId,
+            savedAt: new Date()
+        });
         await user.save();
 
         return res.status(200).json({
@@ -102,22 +107,28 @@ router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
 
         // Find the user and populate saved jobs
         const user = await User.findById(userId).populate({
-            path: "savedJobs",
+            path: "savedJobs.job", // ✅ Nested path
             select: "-jobCreatedby -candidatesApplied -savedCandidates"
-        })
+        });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // If no saved jobs
+
         if (!user.savedJobs || user.savedJobs.length === 0) {
             return res.status(404).json({ message: "No saved jobs found" });
         }
 
+
+        const formattedJobs = user.savedJobs.map((item) => ({
+            job: item.job,
+            savedAt: item.savedAt
+        }));
+
         return res.status(200).json({
             message: "Saved jobs fetched successfully",
-            savedJobs: user.savedJobs
+            savedJobs: formattedJobs
         });
     } catch (error) {
         console.error("Error fetching saved jobs:", error);
@@ -126,44 +137,47 @@ router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
 });
 
 
-
 router.delete("/removesavedjob/:jobId", jwtMiddleWare, async (req, res) => {
     try {
-        const userId = req.jwtPayload.id; // ✅ Correct from JWT
+        const userId = req.jwtPayload.id;
         const jobId = req.params.jobId;
-        // Find the user
+
+        // ✅ Find the user
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-
-
+        // ✅ Check if job exists
         const job = await Jobs.findById(jobId);
-
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
 
-
-
-        if (!user.savedJobs.includes(jobId)) {
+        // ✅ Check if job is actually saved
+        const isSaved = user.savedJobs.some(
+            (item) => item.job.toString() === jobId
+        );
+        if (!isSaved) {
             return res.status(400).json({ message: "Job is not saved" });
         }
 
+        // ✅ Remove the saved job
+        user.savedJobs = user.savedJobs.filter(
+            (item) => item.job.toString() !== jobId
+        );
 
-        user.savedJobs = user.savedJobs.filter(savedJobId => savedJobId.toString() !== jobId);
         await user.save();
 
-
-        return res.status(200).json({ message: "Job removed from saved jobs successfully" });
-
-
+        return res.status(200).json({
+            message: "Job removed from saved jobs successfully",
+        });
     } catch (error) {
         console.error("Error removing saved job:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
 
 
 router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {

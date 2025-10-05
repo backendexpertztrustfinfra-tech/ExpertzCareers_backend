@@ -89,13 +89,17 @@ const UserSchema = mongoose.Schema({
   recruterIndustry: {
     type: String, default: null
   },
-  savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
-  savedCandidates: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    default: null
+  savedJobs: [{
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      required: true
+    },
+    savedAt: {
+      type: Date,
+      default: Date.now
+    }
   }],
-
 
 })
 
