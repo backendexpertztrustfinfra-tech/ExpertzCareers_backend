@@ -10,6 +10,10 @@ const jobSchema = mongoose.Schema({
     companyName: {
         type: String
     },
+
+     companyLogo: {
+    type: String, default: null
+  },
     jobCreatedby: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
