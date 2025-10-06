@@ -100,6 +100,11 @@ const UserSchema = mongoose.Schema({
       default: Date.now
     }
   }],
+  savedCandidates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  }],
 
 })
 

@@ -39,11 +39,13 @@ router.put("/savecandidate/:userId", jwtMiddleWare, async (req, res) => {
         if (!user || !newsaveuser) {
             return res.status(404).json({ message: "User not found" });
         }
+        if (user.usertype !== "recruiter") {
+            return res.status(403).json({ message: "Only recruiters can save candidates" });
+        }
 
         if (user.savedCandidates.includes(saveuserId)) {
             return res.status(400).json({ message: "Already saved to this " });
         }
-
         user.savedCandidates.push(saveuserId);
         const result = await user.save();
         return res.status(200).json({ message: "Candidate saved successfully!", user: result });
@@ -110,6 +112,8 @@ router.get("/getsavedcandidates", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 })
+
+
 
 router.get("/getcreatedjobs", jwtMiddleWare, async (req, res) => {
     try {
