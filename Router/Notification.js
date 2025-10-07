@@ -60,7 +60,7 @@ router.post("/sentnotification", async (req, res) => {
                 targetScreen = "ApplicationStatus";
                 break;
             case "REJECTED":
-                title = "Application Rejected";
+                title = "Application Update";
                 description = "We regret to inform you that you have not been selected for the position. Keep applying!";
                 targetScreen = "ApplicationStatus";
                 break;
