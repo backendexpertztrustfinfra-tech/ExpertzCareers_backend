@@ -8,8 +8,7 @@ const subscriptionSchema = mongoose.Schema({
     jobsPosted: { type: Number, default: 0 },
     jobPostLimit: { type: Number, required: true },
     dbPoints: { type: Number, required: true },
-    isActive: { type: Boolean, default: true },
-     planName: { type: String, required: true },
+    isActive: { type: Boolean, default: true }
 });
 
 const Subscriptions = mongoose.model("Subscription", subscriptionSchema);
