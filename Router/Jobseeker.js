@@ -60,7 +60,7 @@ router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
             status: "live",
             "candidatesApplied.userId": { $ne: userId }, // Apply nahi ki
             _id: { $nin: savedJobIds } // Saved jobs mein nahi hai
-        });
+        }).sort({ createdAt: -1 });
 
         if (!liveJobs || liveJobs.length === 0) {
             return res.status(404).json({ message: "No live jobs found" });
