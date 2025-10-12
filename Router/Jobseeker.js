@@ -232,7 +232,7 @@ router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {
 router.get("/getjobseekerprofile", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
-        const user = await User.findById(userId).select("-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs -savedCandidates");
+        const user = await User.findById(userId).select("-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs -savedCandidates -otp -otpExpires -isVerified -createdAt -updatedAt -__v");
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }

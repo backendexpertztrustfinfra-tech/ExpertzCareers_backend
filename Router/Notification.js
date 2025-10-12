@@ -95,12 +95,13 @@ router.post("/sentnotification", async (req, res) => {
 router.get("/getnotifications", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
-        const notifications = await Notification.find({ userId: userId }).sort({ createdAt: -1 });
+        const notifications = await Notification.find({ userId: userId }).select('-userId')
+            .sort({ createdAt: -1 });
         if (!notifications) {
             return res.status(404).json({ msg: "No notifications found" })
         }
 
-        return res.status(200).json({ notifications: notifications });
+        return res.status(200).json({ userId: userId, notifications: notifications });
 
     } catch (e) {
         console.log("error", e);
