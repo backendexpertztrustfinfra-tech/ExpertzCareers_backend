@@ -97,11 +97,22 @@ router.get("/getnotifications", jwtMiddleWare, async (req, res) => {
         const userId = req.jwtPayload.id;
         const notifications = await Notification.find({ userId: userId }).select('-userId')
             .sort({ createdAt: -1 });
-        if (!notifications) {
-            return res.status(404).json({ msg: "No notifications found" })
+        if (!notifications || notifications.length === 0) {
+            return res.status(404).json({ msg: "No notifications found" });
         }
 
-        return res.status(200).json({ userId: userId, notifications: notifications });
+        // refresh latest job data if present
+        const enrichedNotifications = await Promise.all(
+            notifications.map(async (notif) => {
+                if (notif.extraData?.job?._id) {
+                    const job = await Jobs.findById(notif.extraData.job._id);
+                    if (job) notif.extraData.job = job; // replace old snapshot
+                }
+                return notif;
+            })
+        );
+        return res.status(200).json({ userId: userId, notifications: enrichedNotifications });
+
 
     } catch (e) {
         console.log("error", e);
