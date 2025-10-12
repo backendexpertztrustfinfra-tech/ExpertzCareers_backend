@@ -129,7 +129,7 @@ router.put("/readnotification/:id", async (req, res) => {
             { isRead: true },
             { new: true }
         );
-        res.json(notification);
+        res.status(200).json({ msg: "Notification marked as read" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
