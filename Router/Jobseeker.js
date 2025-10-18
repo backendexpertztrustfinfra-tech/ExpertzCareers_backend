@@ -66,7 +66,7 @@ router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
             return res.status(404).json({ message: "No live jobs found" });
         }
 
-        return res.status(200).json({ message: "Live jobs fetched successfully", liveJobs: liveJobs });
+     
 
     } catch (e) {
         console.error("Error fetching saved jobs:", error);
@@ -244,45 +244,7 @@ router.get("/getjobseekerprofile", jwtMiddleWare, async (req, res) => {
     }
 })
 
-router.put("/updateProfile", jwtMiddleWare, upload.fields([
-    { name: "profilphoto", maxCount: 1 }, // ek photo
-    { name: "resume", maxCount: 1 },// multiple documents allow
-    { name: "introvideo", maxCount: 1 }
-]), async (req, res) => {
-    try {
-        const userId = req.jwtPayload.id;
-        const updateddata = req.body
-        //console.log("Request Data:", updateddata);
-        if (req.files["profilphoto"] && req.files["profilphoto"][0]) {
-            updateddata.profilphoto = `/uploads/${req.files["profilphoto"][0].filename}`;
-        }
 
-        if (req.files["resume"] && req.files["resume"][0]) {
-            updateddata.resume = `/uploads/${req.files["resume"][0].filename}`;
-        }
-
-        if (req.files["introvideo"] && req.files["introvideo"][0]) {
-            updateddata.introvideo = `/uploads/${req.files["introvideo"][0].filename}`;
-        }
-
-        if (!userId) return res.status(400).json({ error: "Invalid Token Data" });
-
-        const response = await User.findByIdAndUpdate(userId, updateddata, {
-            new: true,
-            runValidators: true,
-        });
-
-        if (!response) {
-            return res.status(404).json({ error: "User Not Found!" });
-        }
-
-        return res.status(200).json({ message: "Profile Updated Successfully" });
-
-    } catch (e) {
-        console.log("error", e);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-})
 
 
 
