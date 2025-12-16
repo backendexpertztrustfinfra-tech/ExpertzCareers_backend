@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
-const upload = require("../middleware/imageUploadMiddle")
+const upload = require("../config/multerConfig")
 
 
 router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
@@ -46,34 +46,55 @@ router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
     }
 });
 
+// router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
 
-router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
-
-    try {
-        const userId = req.jwtPayload.id;
-        const user = await User.findById(userId).select('savedJobs');
-        const savedJobIds = user?.savedJobs?.map(saved => saved.job.toString()) || [];
-
+//     try {
+//         const userId = req.jwtPayload.id;
+//         const user = await User.findById(userId).select('savedJobs');
+//         const savedJobIds = user?.savedJobs?.map(saved => saved.job.toString()) || [];
 
 
-        const liveJobs = await Jobs.find({
-            status: "live",
-            "candidatesApplied.userId": { $ne: userId }, // Apply nahi ki
-            _id: { $nin: savedJobIds } // Saved jobs mein nahi hai
-        }).sort({ createdAt: -1 });
 
-        if (!liveJobs || liveJobs.length === 0) {
-            return res.status(404).json({ message: "No live jobs found" });
-        }
+//         const liveJobs = await Jobs.find({
+//             status: "live",
+//             "candidatesApplied.userId": { $ne: userId }, // Apply nahi ki
+//             _id: { $nin: savedJobIds } // Saved jobs mein nahi hai
+//         }).sort({ createdAt: -1 });
+
+//         if (!liveJobs || liveJobs.length === 0) {
+//             return res.status(404).json({ message: "No live jobs found" });
+//         }
 
      
 
-    } catch (e) {
-        console.error("Error fetching saved jobs:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-}
-);
+//     } catch (e) {
+//         console.error("Error fetching saved jobs:", error);
+//         res.status(500).json({ message: "Internal Server Error" });
+//     }
+// }
+// );
+
+router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
+  try {
+    const userId = req.jwtPayload.id;
+    
+    const user = await User.findById(userId).select("savedJobs");
+    const savedJobIds = user?.savedJobs?.map((s) => s.job.toString()) || [];
+
+    // Find all live jobs that user has NOT applied and NOT saved
+    const liveJobs = await Jobs.find({
+      status: "live",
+      "candidatesApplied.userId": { $ne: userId },
+      _id: { $nin: savedJobIds },
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({ liveJobs });
+  } catch (error) {
+    console.error("Error fetching live jobs:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 
 router.get("/appliedjobs", jwtMiddleWare, async (req, res) => {
     try {
@@ -108,18 +129,12 @@ router.get("/appliedjobs", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
-
-
-
-// get save job by jobseeker
 router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
     try {
-        const userId = req.jwtPayload.id; // ✅ Correct from JWT
+        const userId = req.jwtPayload.id; 
 
-        // Find the user and populate saved jobs
         const user = await User.findById(userId).populate({
-            path: "savedJobs.job", // ✅ Nested path
+            path: "savedJobs.job", 
             select: "-jobCreatedby -candidatesApplied -savedCandidates"
         });
 
@@ -148,13 +163,10 @@ router.get("/getsavedJobs", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
 router.delete("/removesavedjob/:jobId", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
         const jobId = req.params.jobId;
-
-        // ✅ Find the user
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -190,8 +202,6 @@ router.delete("/removesavedjob/:jobId", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
-
 router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {
     try {
         const jobId = req.params.jobId;
@@ -226,8 +236,6 @@ router.post("/applyforjob/:jobId", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
-
 
 router.get("/getjobseekerprofile", jwtMiddleWare, async (req, res) => {
     try {

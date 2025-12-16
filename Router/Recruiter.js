@@ -5,26 +5,96 @@ const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
 const { jobStatusMiddleware } = require("../middleware/jobStatusMiddleware");
-const upload = require('../middleware/imageUploadMiddle');
+const upload = require('../config/multerConfig');
 const Plans = require("../model/Plan/PlansSchema")
 const Subscription = require("../model/Subscriptions/SubscriptionSchema")
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payments = require("../model/Payments/PaymentsSchema")
 
+
 require("dotenv").config();
 
 const razorpay = new Razorpay({
-    key_id: process.env.API_KEY,
-    key_secret: process.env.API_SECRET
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
 });
+console.log("Razorpay ID:", process.env.RAZORPAY_KEY_ID);
+console.log("Razorpay Secret:", process.env.RAZORPAY_KEY_SECRET);
 
+// router.post("/postjob", jwtMiddleWare, jobStatusMiddleware, (req, res) => {
+//     res.json({ success: true, job: req.job });
+// });
 
-// create a job 
+router.post("/postjob", jwtMiddleWare, jobStatusMiddleware, async (req, res) => {
+  try {
+    const {
+      jobTitle,
+      jobCategory,
+      description,
+      noofOpening,
+      jobType,
+      location,
+      address,
+      gender,
+      Qualification,
+      totalExperience,
+      relevantExperience,
+      SalaryIncentive,
+      salaryType,
+      jobBenefits,
+      jobSkills,
+      documentRequired,
+      workingDays,
+      weekend,
+      timing,
+      shift,
+      status,
+      ClosedDate,
+      companyName,
+      companyLogo,
+      free
+    } = req.body;
 
+    // Create job entry
+    const job = await Jobs.create({
+      jobTitle,
+      jobCategory,
+      description,
+      noofOpening,
+      jobType,
+      location,
+      address,
+      gender,
+      Qualification,
+      totalExperience,
+      relevantExperience,
+      SalaryIncentive,
+      salaryType,
+      jobBenefits,
+      jobSkills,
+      documentRequired,
+      workingDays,
+      weekend,
+      timing,
+      shift,
+      status,
+      ClosedDate,
+      companyName,
+      companyLogo,   // ⭐ YOUR PROFILE PHOTO WILL BE SAVED HERE
+      free,
+      recruiterId: req.jwtPayload.id
+    });
 
-router.post("/postjob", jwtMiddleWare, jobStatusMiddleware, (req, res) => {
-    res.json({ success: true, job: req.job });
+    return res.json({
+      success: true,
+      job
+    });
+
+  } catch (err) {
+    console.error("Post job error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 
@@ -55,35 +125,70 @@ router.put("/savecandidate/:userId", jwtMiddleWare, async (req, res) => {
     }
 });
 
+// router.get("/getapplieduser/:jobId", jwtMiddleWare, async (req, res) => {
+//     try {
+//         const jobId = req.params.jobId;
+//         const userId = req.jwtPayload.id;
+//         const response = await Jobs.findOne({
+//             _id: jobId,
+//             jobCreatedby: userId
+//         })
+//             .populate({
+//                 path: "candidatesApplied.userId",   // nested populate
+//                 select: "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs" // jo fields exclude karne hain
+//             });
+
+//         if (!response) {
+//             return res.status(404).json({ message: "No candidated found!" });
+//         }
+
+
+//         return res.status(200).json({ candidatesApplied: response.candidatesApplied })
+//     }
+//     catch (e) {
+//         console.log("error", e);
+//         return res.status(500).json({ msg: "internal server error" })
+
+//     }
+// })
 
 router.get("/getapplieduser/:jobId", jwtMiddleWare, async (req, res) => {
-    try {
-        const jobId = req.params.jobId;
-        const userId = req.jwtPayload.id;
-        const response = await Jobs.findOne({
-            _id: jobId,
-            jobCreatedby: userId
-        })
-            .populate({
-                path: "candidatesApplied.userId",   // nested populate
-                select: "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs" // jo fields exclude karne hain
-            });
+  try {
+    const jobId = req.params.jobId;
+    const recruiterId = req.jwtPayload.id;
 
-        if (!response) {
-            return res.status(404).json({ message: "No candidated found!" });
-        }
+    // Find job + populate candidate user data
+    const job = await Jobs.findOne({
+      _id: jobId,
+      jobCreatedby: recruiterId,
+    }).populate({
+      path: "candidatesApplied.userId",
+      select:
+        "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs",
+    });
 
-
-        return res.status(200).json({ candidatesApplied: response.candidatesApplied })
+    if (!job) {
+      return res.status(404).json({ message: "No applied candidates found!" });
     }
-    catch (e) {
-        console.log("error", e);
-        return res.status(500).json({ msg: "internal server error" })
 
-    }
-})
+    const candidates = job.candidatesApplied || [];
 
+    // Count types
+    const appliedCount = candidates.length;
+    const contactedCount = candidates.filter((c) => c.contacted === true).length;
+    const nonContactedCount = candidates.filter((c) => !c.contacted).length;
 
+    return res.status(200).json({
+      appliedCount,
+      contactedCount,
+      nonContactedCount,
+      candidatesApplied: candidates,
+    });
+  } catch (e) {
+    console.log("error", e);
+    return res.status(500).json({ msg: "internal server error" });
+  }
+});
 
 
 router.get("/getsavedcandidates", jwtMiddleWare, async (req, res) => {
@@ -113,8 +218,6 @@ router.get("/getsavedcandidates", jwtMiddleWare, async (req, res) => {
     }
 })
 
-
-
 router.get("/getcreatedjobs", jwtMiddleWare, async (req, res) => {
     try {
 
@@ -135,7 +238,6 @@ router.get("/getcreatedjobs", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
 
 router.get("/getlivejobs", jwtMiddleWare, async (req, res) => {
     try {
@@ -158,7 +260,6 @@ router.get("/getlivejobs", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
 router.get("/getpendingjobs", jwtMiddleWare, async (req, res) => {
     try {
 
@@ -180,11 +281,6 @@ router.get("/getpendingjobs", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
-
-
-
-
 router.delete("/deletejob/:id", jwtMiddleWare, async (req, res) => {
     try {
         const jobId = req.params.id
@@ -205,7 +301,6 @@ router.delete("/deletejob/:id", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ msg: "Internal Server Error" })
     }
 })
-
 
 router.put("/updatejob/:id", jwtMiddleWare, async (req, res) => {
     try {
@@ -238,9 +333,6 @@ router.put("/updatejob/:id", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
-
-
 router.get("/getclosedjobs", jwtMiddleWare, async (req, res) => {
     try {
 
@@ -262,7 +354,6 @@ router.get("/getclosedjobs", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
 router.get("/getRecruiterProfile", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
@@ -277,8 +368,6 @@ router.get("/getRecruiterProfile", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ msg: "Internal Server Error" })
     }
 });
-
-
 
 router.put("/updateRecruiterProfile", upload.fields([
     { name: "profilphoto", maxCount: 1 }, // ek photo
@@ -317,8 +406,6 @@ router.put("/updateRecruiterProfile", upload.fields([
     }
 });
 
-
-
 router.get("/getallAppliedCandidatees", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
@@ -343,11 +430,9 @@ router.get("/getallAppliedCandidatees", jwtMiddleWare, async (req, res) => {
 
 })
 
-
 router.post("/createplan", async (req, res) => {
     try {
         const planData = req.body;
-
         const newPlan = new Plans(planData)
         const savedPlan = await newPlan.save();
         return res.status(201).json({ msg: "Plan created successfully", plan: savedPlan })
@@ -357,7 +442,6 @@ router.post("/createplan", async (req, res) => {
         return res.status(500).json({ msg: "Internal Server Error" })
     }
 })
-
 
 router.put("/updateapplyjobstatus/:jobId", jwtMiddleWare, async (req, res) => {
     try {
@@ -383,49 +467,6 @@ router.put("/updateapplyjobstatus/:jobId", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ msg: "Internal Server Error" })
     }
 })
-
-// router.post("/buyplan", jwtMiddleWare, async (req, res) => {
-//     try {
-//         const userId = req.jwtPayload.id;
-//         const { planName } = req.body;
-//         const plan = await Plans.findOne({ planName: planName });
-//         if (!plan) {
-//             return res.status(404).json({ msg: "Plan Not Found!" })
-//         }
-//         const user = await User.findById(userId);
-//         if (!user) {
-//             return res.status(404).json({ msg: "User Not Found!" })
-//         }
-
-
-//         await Subscription.updateMany(
-//             { recruiterId: userId, isActive: true },
-//             { $set: { isActive: false } }
-//         );
-
-
-//         const startDate = new Date();
-//         const endDate = new Date();
-//         endDate.setDate(startDate.getDate() + plan.durationInDays);
-
-
-//         const subscription = new Subscription({
-//             recruiterId: userId,
-//             planId: plan._id,
-//             startDate: startDate,
-//             endDate: endDate,
-//             jobsPosted: 0,
-//             jobPostLimit: plan.jobPostLimit,
-//             isActive: true
-//         });
-//         const savedSubscription = await subscription.save();
-//         return res.status(201).json({ msg: "Plan Purchased Successfully!", subscription: savedSubscription })
-
-//     } catch (e) {
-//         console.log("error", e);
-//         return res.status(500).json({ msg: "Internal Server Error" })
-//     }
-// })
 
 router.post('/create-order', jwtMiddleWare, async (req, res) => {
     const { amount } = req.body;
@@ -466,9 +507,6 @@ router.post('/create-order', jwtMiddleWare, async (req, res) => {
     }
 });
 
-
-
-
 router.get("/getActiveSubscription", jwtMiddleWare, async (req, res) => {
     try {
 
@@ -486,7 +524,6 @@ router.get("/getActiveSubscription", jwtMiddleWare, async (req, res) => {
     }
 })
 
-
 router.post("/payment-success", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
@@ -496,7 +533,7 @@ router.post("/payment-success", jwtMiddleWare, async (req, res) => {
 
         //  Signature verification
         const generated_signature = crypto
-            .createHmac("sha256", process.env.API_SECRET)
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
             .update(order_id + "|" + payment_id)
             .digest("hex");
 
@@ -513,7 +550,6 @@ router.post("/payment-success", jwtMiddleWare, async (req, res) => {
         if (!user) {
             return res.status(404).json({ msg: "User Not Found!" })
         }
-
 
         await Subscription.updateMany(
             { recruiterId: userId, isActive: true },
@@ -575,8 +611,6 @@ router.post("/payment-success", jwtMiddleWare, async (req, res) => {
     }
 });
 
-
-
 router.get("/getPaymentHistory", jwtMiddleWare, async (req, res) => {
     try {
         const userId = req.jwtPayload.id;
@@ -591,7 +625,6 @@ router.get("/getPaymentHistory", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ msg: "Internal Server Error" })
     }
 })
-
 
 router.get("/dbpointUser", jwtMiddleWare, async (req, res) => {
     try {
@@ -619,13 +652,50 @@ router.get("/dbpointUser", jwtMiddleWare, async (req, res) => {
 
 })
 
+router.put("/contacted/:jobId", jwtMiddleWare, async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { candidateId } = req.body;
+    const recruiterId = req.jwtPayload.id;
 
+    if (!candidateId) {
+      return res.status(400).json({ message: "Candidate ID required" });
+    }
 
+    // Find correct job
+    const job = await Jobs.findOne({
+      _id: jobId,
+      jobCreatedby: recruiterId,
+    });
 
+    if (!job) {
+      return res.status(404).json({ message: "Job not found or unauthorized" });
+    }
 
+    // Find candidate object inside array
+    const candidate = job.candidatesApplied.find(
+      (c) => c.userId.toString() === candidateId
+    );
 
+    if (!candidate) {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
 
+    // Update contacted fields
+    candidate.contacted = true;
+    candidate.contactedAt = new Date();
 
+    await job.save();
+
+    return res.json({
+      message: "Candidate marked as contacted",
+      candidate,
+    });
+  } catch (err) {
+    console.log("Contacted error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 

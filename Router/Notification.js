@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
 const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
-const upload = require("../middleware/imageUploadMiddle")
+const upload = require("../config/multerConfig")
 const Notification = require("../model/Notifications/NotificationSchema");
 
 

@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 async function sendEmail({ to, subject, text, html }) {
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Expertz Trust <hr@expertztrustfinfra.com>', // Free verified domain
+            from: 'Expertz Trust <hr@expertztrustfinfra.com>', 
             to: [to],
             subject: subject,
             text: text,
@@ -16,7 +16,6 @@ async function sendEmail({ to, subject, text, html }) {
             console.error('❌ Resend error:', error);
             throw error;
         }
-
         console.log('✅ Email sent via Resend:', data.id);
         return data;
     } catch (error) {
