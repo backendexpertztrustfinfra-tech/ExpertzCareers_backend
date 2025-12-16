@@ -19,12 +19,10 @@ const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
-console.log("Razorpay ID:", process.env.RAZORPAY_KEY_ID);
-console.log("Razorpay Secret:", process.env.RAZORPAY_KEY_SECRET);
 
-// router.post("/postjob", jwtMiddleWare, jobStatusMiddleware, (req, res) => {
-//     res.json({ success: true, job: req.job });
-// });
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  throw new Error("Razorpay keys are missing in environment variables");
+}
 
 router.post("/postjob", jwtMiddleWare, jobStatusMiddleware, async (req, res) => {
   try {
