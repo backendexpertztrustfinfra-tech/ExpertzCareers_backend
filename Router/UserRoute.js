@@ -12,6 +12,10 @@ const { sendEmail } = require("../utilitys/resend-mailer");
 const validator = require("validator");
 const upload = require("../config/multerConfig");
 
+console.log("FILE:", req.file);
+console.log("BODY:", req.body);
+
+
 router.post("/signup", async (req, res) => {
   try {
     const data = req.body;
