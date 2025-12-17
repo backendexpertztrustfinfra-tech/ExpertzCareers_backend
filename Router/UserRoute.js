@@ -1,20 +1,19 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const User = require("../model/User/UserSchema");
 const Jobs = require("../model/User/jobSchema");
 const Test = require("../model/User/TestSchema");
 const bcrypt = require("bcrypt");
-const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
+const {
+  jwtMiddleWare,
+  generateToken,
+} = require("../middleware/jwtAuthMiddleware");
 const Plans = require("../model/Plan/PlansSchema");
 const Subscription = require("../model/Subscriptions/SubscriptionSchema");
 const { sendEmail } = require("../utilitys/resend-mailer");
 const validator = require("validator");
 const upload = require("../config/multerConfig");
-
-console.log("FILE:", req.file);
-console.log("BODY:", req.body);
-
 
 router.post("/signup", async (req, res) => {
   try {
@@ -92,56 +91,109 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// router.put(
+//   "/update",
+//   jwtMiddleWare,
+//   upload.fields([
+//     { name: "profilphoto", maxCount: 1 },
+//     { name: "resume", maxCount: 1 },
+//     { name: "introvideo", maxCount: 1 },
+//   ]),
+//   async (req, res) => {
+//     try {
+//       const userId = req.jwtPayload.id;
+//       const userUpdatedData = {
+//         ...req.body,
+//         profilphoto:
+//           req.files?.profilphoto?.[0]?.filename || req.body.profilphoto,
+//         resume: req.files?.resume?.[0]?.filename || req.body.resume,
+//         introvideo: req.files?.introvideo?.[0]?.filename || req.body.introvideo,
+//       };
+
+//       console.log("Incoming Data:", userUpdatedData);
+
+//       const response = await User.findOneAndUpdate(
+//         { _id: userId },
+//         { $set: userUpdatedData },
+//         { new: true, runValidators: true }
+//       );
+
+//       if (!response) {
+//         return res.status(404).json({ msg: "User Not Found!" });
+//       }
+
+//       return res.status(200).json({
+//         msg: "User Update Successfully",
+//         UpdatedData: response,
+//       });
+//     } catch (e) {
+//       console.error("error", e);
+//       return res.status(500).json({ msg: "Internal Server Error" });
+//     }
+//   }
+// );
+
+
 router.put(
   "/update",
   jwtMiddleWare,
   upload.fields([
     { name: "profilphoto", maxCount: 1 },
     { name: "resume", maxCount: 1 },
-      { name: "introvideo", maxCount: 1 },
+    { name: "introvideo", maxCount: 1 },
   ]),
   async (req, res) => {
     try {
-      const userId = req.jwtPayload.id;
+      const userId = req.jwtPayload.id
 
-      const userUpdatedData = {
-        ...req.body,
-        profilphoto: req.files?.profilphoto?.[0]?.filename || req.body.profilphoto,
-        resume: req.files?.resume?.[0]?.filename || req.body.resume,
-        introvideo: req.files?.introvideo?.[0]?.filename || req.body.introvideo,
+      console.log("FILES:", req.files)
+      console.log("BODY:", req.body)
 
-      };
+      const userUpdatedData = { ...req.body }
 
-      console.log("Incoming Data:", userUpdatedData);
+      // TEMP: just store original file names
+      if (req.files?.profilphoto) {
+        userUpdatedData.profilphoto =
+          req.files.profilphoto[0].originalname
+      }
+
+      if (req.files?.resume) {
+        userUpdatedData.resume =
+          req.files.resume[0].originalname
+      }
+
+      if (req.files?.introvideo) {
+        userUpdatedData.introvideo =
+          req.files.introvideo[0].originalname
+      }
 
       const response = await User.findOneAndUpdate(
         { _id: userId },
         { $set: userUpdatedData },
-        { new: true, runValidators: true }
-      );
+        { new: true }
+      )
 
       if (!response) {
-        return res.status(404).json({ msg: "User Not Found!" });
+        return res.status(404).json({ msg: "User Not Found!" })
       }
 
       return res.status(200).json({
         msg: "User Update Successfully",
         UpdatedData: response,
-      });
+      })
     } catch (e) {
-      console.error("error", e);
-      return res.status(500).json({ msg: "Internal Server Error" });
+      console.error(e)
+      return res.status(500).json({ msg: "Internal Server Error" })
     }
   }
-);
-
+)
 
 router.post("/send-otp", async (req, res) => {
   try {
     const { useremail } = req.body;
 
     if (!useremail || !validator.isEmail(useremail)) {
-      return res.status(400).json({ msg: "Invalid Email" })
+      return res.status(400).json({ msg: "Invalid Email" });
     }
 
     const user = await User.findOne({ useremail: useremail });
@@ -156,31 +208,30 @@ router.post("/send-otp", async (req, res) => {
     const text = `Your verification code is: ${otp}. It expires in 10 minutes.`;
 
     try {
-      await sendEmail({ to: user.useremail, subject: 'Your OTP code', text });
+      await sendEmail({ to: user.useremail, subject: "Your OTP code", text });
       //await sendEmail({ to: user.useremail, subject: 'Your OTP code', text });
 
       return res.status(200).json({ msg: "OTP sent to email" });
     } catch (err) {
-      console.error('Error sending email:', err);
-      return res.status(500).json({ msg: 'Failed to send OTP email' });
+      console.error("Error sending email:", err);
+      return res.status(500).json({ msg: "Failed to send OTP email" });
     }
-
   } catch (e) {
     console.log("error", e);
-    return res.status(500).json({ msg: "Internal Server Error" })
+    return res.status(500).json({ msg: "Internal Server Error" });
   }
-})
+});
 
-router.post('/verify-otp', async (req, res) => {
+router.post("/verify-otp", async (req, res) => {
   const { useremail, otp } = req.body;
   const user = await User.findOne({ useremail: useremail });
   if (!user || user.otp !== otp || user.otpExpires < Date.now())
-    return res.status(400).json({ msg: 'Invalid or expired OTP' });
+    return res.status(400).json({ msg: "Invalid or expired OTP" });
   user.isVerified = true;
   user.otp = undefined;
   user.otpExpires = undefined;
   await user.save();
-  res.json({ msg: 'OTP verified' });
+  res.json({ msg: "OTP verified" });
 });
 
 router.put("/reset-password", async (req, res) => {
@@ -195,37 +246,30 @@ router.put("/reset-password", async (req, res) => {
     await user.save();
 
     res.json({ msg: "Password reset successful" });
-
   } catch (e) {
     console.log("error", e);
-    return res.status(500).json({ msg: "Internal Server Error" })
+    return res.status(500).json({ msg: "Internal Server Error" });
   }
-
-
 });
 
 router.get("/finduser/:useremail", async (req, res) => {
   try {
-
     const usermail = req.params.useremail;
 
     if (!usermail || !validator.isEmail(usermail)) {
-      return res.status(400).json({ msg: "Invalid Email" })
+      return res.status(400).json({ msg: "Invalid Email" });
     }
 
-    const response = await User.findOne({ useremail: usermail })
+    const response = await User.findOne({ useremail: usermail });
     if (!response) {
-      console.log("User Not Found!")
-      return res.status(404).json({ userFound: false })
+      console.log("User Not Found!");
+      return res.status(404).json({ userFound: false });
     }
     return res.status(200).json({ userFound: true });
   } catch (e) {
-    console.log("Error", e)
-    return res.status(500).json({ msg: "Internal Server Error" })
-
+    console.log("Error", e);
+    return res.status(500).json({ msg: "Internal Server Error" });
   }
-
 });
-
 
 module.exports = router;
