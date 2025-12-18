@@ -20,9 +20,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 require("dotenv").config();
 
 const razorpay = new Razorpay({
