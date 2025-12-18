@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const User = require("../model/User/UserSchema");
 const Jobs = require("../model/User/jobSchema");
 const Test = require("../model/User/TestSchema");
+const { cloudinary, uploadToCloudinary } = require("../config/cloudinary");
 const bcrypt = require("bcrypt");
 const {
   jwtMiddleWare,
@@ -14,6 +15,24 @@ const Subscription = require("../model/Subscriptions/SubscriptionSchema");
 const { sendEmail } = require("../utilitys/resend-mailer");
 const validator = require("validator");
 const upload = require("../config/multerConfig");
+console.log("Cloudinary object:", cloudinary);
+
+const getPublicIdFromUrl = (url) => {
+  const parts = url.split("/");
+  const folderAndFile = parts.slice(-2).join("/");
+  return folderAndFile.replace(/\.[^/.]+$/, "");
+};
+
+const isAllowed = (file, type) => {
+  if (!file || !file.mimetype) return false;
+  if (type === "image") return file.mimetype.startsWith("image/");
+  if (type === "video")
+    return ["video/mp4", "video/quicktime", "video/webm"].includes(
+      file.mimetype
+    );
+  if (type === "raw") return file.mimetype === "application/pdf";
+  return false;
+};
 
 router.post("/signup", async (req, res) => {
   try {
@@ -133,7 +152,6 @@ router.post("/login", async (req, res) => {
 //   }
 // );
 
-
 router.put(
   "/update",
   jwtMiddleWare,
@@ -144,49 +162,111 @@ router.put(
   ]),
   async (req, res) => {
     try {
-      const userId = req.jwtPayload.id
+      const userId = req.jwtPayload.id;
+      const userUpdatedData = { ...req.body };
 
-      console.log("FILES:", req.files)
-      console.log("BODY:", req.body)
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ msg: "User Not Found!" });
 
-      const userUpdatedData = { ...req.body }
-
-      // TEMP: just store original file names
+      // ----------- PROFILE PHOTO -----------
       if (req.files?.profilphoto) {
-        userUpdatedData.profilphoto =
-          req.files.profilphoto[0].originalname
+        const file = req.files.profilphoto[0];
+        if (!isAllowed(file, "image"))
+          return res.status(400).json({ msg: "Invalid image file" });
+
+        // Delete old profile photo safely
+        if (user.profilphoto?.includes("cloudinary")) {
+          const publicId = getPublicIdFromUrl(user.profilphoto);
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "image",
+          });
+        }
+
+        const result = await uploadToCloudinary(
+          file.buffer,
+          "profile_photos",
+          "image"
+        );
+        userUpdatedData.profilphoto = result.secure_url;
       }
 
+      // ----------- RESUME PDF -----------
       if (req.files?.resume) {
-        userUpdatedData.resume =
-          req.files.resume[0].originalname
+        const file = req.files.resume[0];
+
+        // Allow only PDFs
+        if (!isAllowed(file, "raw"))
+          return res.status(400).json({ msg: "Only PDF allowed" });
+
+        // Delete old PDF safely
+        if (user.resume) {
+          const publicId = getPublicIdFromUrl(user.resume);
+          await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+        }
+
+        const result = await uploadToCloudinary(
+          file.buffer,
+          "resumes",
+          "image",
+          {
+            public_id: `resume_${Date.now()}`,
+            format: "pdf",
+            access_mode: "public",
+          }
+        );
+
+        console.log("PDF upload info:", {
+          url: result.secure_url,
+          resource_type: result.resource_type,
+          access_mode: result.access_mode,
+        });
+
+        userUpdatedData.resume = result.secure_url + "?fl_attachment=false";
       }
 
+      // ----------- INTRO VIDEO -----------
       if (req.files?.introvideo) {
-        userUpdatedData.introvideo =
-          req.files.introvideo[0].originalname
+        const file = req.files.introvideo[0];
+        if (!isAllowed(file, "video"))
+          return res.status(400).json({ msg: "Invalid video file" });
+
+        if (user.introvideo) {
+          const publicId = getPublicIdFromUrl(user.introvideo);
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "video",
+          });
+        }
+
+        const result = await uploadToCloudinary(
+          file.buffer,
+          "intro_videos",
+          "video"
+        );
+        userUpdatedData.introvideo = result.secure_url;
       }
 
-      const response = await User.findOneAndUpdate(
-        { _id: userId },
-        { $set: userUpdatedData },
-        { new: true }
-      )
+      console.log("FINAL UPDATE DATA:", userUpdatedData);
 
-      if (!response) {
-        return res.status(404).json({ msg: "User Not Found!" })
-      }
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        userUpdatedData,
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
 
-      return res.status(200).json({
-        msg: "User Update Successfully",
-        UpdatedData: response,
-      })
-    } catch (e) {
-      console.error(e)
-      return res.status(500).json({ msg: "Internal Server Error" })
+      res
+        .status(200)
+        .json({ msg: "User Updated Successfully", user: updatedUser });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res
+        .status(500)
+        .json({ msg: "Internal Server Error", error: error.message });
     }
   }
-)
+);
 
 router.post("/send-otp", async (req, res) => {
   try {

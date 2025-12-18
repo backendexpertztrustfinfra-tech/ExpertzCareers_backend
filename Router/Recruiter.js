@@ -11,7 +11,9 @@ const Subscription = require("../model/Subscriptions/SubscriptionSchema")
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payments = require("../model/Payments/PaymentsSchema")
+const path = require('path');
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 require("dotenv").config();
 
@@ -95,7 +97,6 @@ router.post("/postjob", jwtMiddleWare, jobStatusMiddleware, async (req, res) => 
   }
 });
 
-
 router.put("/savecandidate/:userId", jwtMiddleWare, async (req, res) => {
     try {
         const saveuserId = req.params.userId;
@@ -122,33 +123,6 @@ router.put("/savecandidate/:userId", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
-// router.get("/getapplieduser/:jobId", jwtMiddleWare, async (req, res) => {
-//     try {
-//         const jobId = req.params.jobId;
-//         const userId = req.jwtPayload.id;
-//         const response = await Jobs.findOne({
-//             _id: jobId,
-//             jobCreatedby: userId
-//         })
-//             .populate({
-//                 path: "candidatesApplied.userId",   // nested populate
-//                 select: "-password -recruterPhone -recruterCompany -recruterCompanyType -recruterCompanyAddress -recruterLogo -recruterIndustry -recruterGstIn -recruterCompanyDoc -savedJobs" // jo fields exclude karne hain
-//             });
-
-//         if (!response) {
-//             return res.status(404).json({ message: "No candidated found!" });
-//         }
-
-
-//         return res.status(200).json({ candidatesApplied: response.candidatesApplied })
-//     }
-//     catch (e) {
-//         console.log("error", e);
-//         return res.status(500).json({ msg: "internal server error" })
-
-//     }
-// })
 
 router.get("/getapplieduser/:jobId", jwtMiddleWare, async (req, res) => {
   try {
@@ -187,7 +161,6 @@ router.get("/getapplieduser/:jobId", jwtMiddleWare, async (req, res) => {
     return res.status(500).json({ msg: "internal server error" });
   }
 });
-
 
 router.get("/getsavedcandidates", jwtMiddleWare, async (req, res) => {
     try {
@@ -367,42 +340,86 @@ router.get("/getRecruiterProfile", jwtMiddleWare, async (req, res) => {
     }
 });
 
-router.put("/updateRecruiterProfile", upload.fields([
-    { name: "profilphoto", maxCount: 1 }, // ek photo
-    { name: "recruterCompanyDoc", maxCount: 1 } // multiple documents allow
-]), jwtMiddleWare, async (req, res) => {
+// router.put("/updateRecruiterProfile", upload.fields([
+//     { name: "profilphoto", maxCount: 1 }, // ek photo
+//     { name: "recruterCompanyDoc", maxCount: 1 } // multiple documents allow
+// ]), jwtMiddleWare, async (req, res) => {
+//     try {
+//         const userId = req.jwtPayload.id
+//         const userUpdatedData = req.body
+
+
+//         if (req.files["profilphoto"] && req.files["profilphoto"][0]) {
+//             userUpdatedData.profilphoto = `/uploads/${req.files["profilphoto"][0].filename}`;
+//         }
+//         if (req.files["recruterCompanyDoc"] && req.files["recruterCompanyDoc"][0]) {
+//             userUpdatedData.recruterCompanyDoc = `/uploads/${req.files["recruterCompanyDoc"][0].filename}`;
+//         }
+
+//         const response = await User.findOneAndUpdate(
+//             { _id: userId },
+//             userUpdatedData,
+//             {
+//                 new: true,
+//                 runValidators: true
+//             }
+//         )
+//         if (!response) {
+//             return res.status(404).json({ msg: "User Not Found!" })
+//         }
+//         console.log("User Update Succssfully");
+//         return res.status(200).json({ msg: "User Update Succssfully" })
+//     }
+//     catch (e) {
+//         console.log("error", e);
+//         return res.status(500).json({ msg: "Internal Server Error" })
+
+//     }
+// });
+
+
+router.put("/updateRecruiterProfile",
+  jwtMiddleWare,
+  upload.fields([
+    { name: "profilphoto", maxCount: 1 },
+    { name: "recruterCompanyDoc", maxCount: 5 } // allow up to 5 files
+  ]),
+  async (req, res) => {
     try {
-        const userId = req.jwtPayload.id
-        const userUpdatedData = req.body
+      const userId = req.jwtPayload.id;
+      const userUpdatedData = { ...req.body };
 
+      // Profile photo
+      if (req.files.profilphoto && req.files.profilphoto[0]) {
+        userUpdatedData.profilphoto = `/uploads/${req.files.profilphoto[0].filename}`;
+      }
 
-        if (req.files["profilphoto"] && req.files["profilphoto"][0]) {
-            userUpdatedData.profilphoto = `/uploads/${req.files["profilphoto"][0].filename}`;
-        }
-        if (req.files["recruterCompanyDoc"] && req.files["recruterCompanyDoc"][0]) {
-            userUpdatedData.recruterCompanyDoc = `/uploads/${req.files["recruterCompanyDoc"][0].filename}`;
-        }
+      // Company documents
+      if (req.files.recruterCompanyDoc && req.files.recruterCompanyDoc.length > 0) {
+        // Optional: Validate PDF only
+        const invalidFiles = req.files.recruterCompanyDoc.filter(f => f.mimetype !== "application/pdf");
+        if (invalidFiles.length > 0) return res.status(400).json({ msg: "Only PDF allowed for company documents" });
 
-        const response = await User.findOneAndUpdate(
-            { _id: userId },
-            userUpdatedData,
-            {
-                new: true,
-                runValidators: true
-            }
-        )
-        if (!response) {
-            return res.status(404).json({ msg: "User Not Found!" })
-        }
-        console.log("User Update Succssfully");
-        return res.status(200).json({ msg: "User Update Succssfully" })
-    }
-    catch (e) {
-        console.log("error", e);
-        return res.status(500).json({ msg: "Internal Server Error" })
+        // Map all files to paths
+        userUpdatedData.recruterCompanyDoc = req.files.recruterCompanyDoc.map(f => `/uploads/${f.filename}`);
+      }
 
+      const response = await User.findByIdAndUpdate(
+        userId,
+        userUpdatedData,
+        { new: true, runValidators: true }
+      );
+
+      if (!response) return res.status(404).json({ msg: "User Not Found!" });
+
+      console.log("User updated successfully");
+      return res.status(200).json({ msg: "User updated successfully", user: response });
+    } catch (e) {
+      console.error("Error updating recruiter profile:", e);
+      return res.status(500).json({ msg: "Internal Server Error" });
     }
 });
+
 
 router.get("/getallAppliedCandidatees", jwtMiddleWare, async (req, res) => {
     try {
