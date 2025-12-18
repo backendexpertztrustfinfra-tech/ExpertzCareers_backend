@@ -13,6 +13,14 @@ const crypto = require("crypto");
 const Payments = require("../model/Payments/PaymentsSchema")
 const path = require('path');
 
+const cloudinary = require("cloudinary").v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
+
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 require("dotenv").config();
@@ -378,46 +386,48 @@ router.get("/getRecruiterProfile", jwtMiddleWare, async (req, res) => {
 // });
 
 
-router.put("/updateRecruiterProfile",
-  jwtMiddleWare,
-  upload.fields([
-    { name: "profilphoto", maxCount: 1 },
-    { name: "recruterCompanyDoc", maxCount: 5 } // allow up to 5 files
-  ]),
-  async (req, res) => {
-    try {
-      const userId = req.jwtPayload.id;
-      const userUpdatedData = { ...req.body };
 
-      // Profile photo
-      if (req.files.profilphoto && req.files.profilphoto[0]) {
-        userUpdatedData.profilphoto = `/uploads/${req.files.profilphoto[0].filename}`;
-      }
+router.put("/updateRecruiterProfile", jwtMiddleWare, upload.fields([
+  { name: "profilphoto", maxCount: 1 },
+  { name: "recruterCompanyDoc", maxCount: 5 }
+]), async (req, res) => {
+  try {
+    const userId = req.jwtPayload.id;
+    const userUpdatedData = { ...req.body };
 
-      // Company documents
-      if (req.files.recruterCompanyDoc && req.files.recruterCompanyDoc.length > 0) {
-        // Optional: Validate PDF only
-        const invalidFiles = req.files.recruterCompanyDoc.filter(f => f.mimetype !== "application/pdf");
-        if (invalidFiles.length > 0) return res.status(400).json({ msg: "Only PDF allowed for company documents" });
+    // Profile photo upload
+    if (req.files.profilphoto && req.files.profilphoto[0]) {
+      const result = await cloudinary.uploader.upload(req.files.profilphoto[0].path, {
+        folder: "recruiters/profile"
+      });
+      userUpdatedData.profilphoto = result.secure_url;
+    }
 
-        // Map all files to paths
-        userUpdatedData.recruterCompanyDoc = req.files.recruterCompanyDoc.map(f => `/uploads/${f.filename}`);
-      }
-
-      const response = await User.findByIdAndUpdate(
-        userId,
-        userUpdatedData,
-        { new: true, runValidators: true }
+    // Company document uploads (PDF only)
+    if (req.files.recruterCompanyDoc && req.files.recruterCompanyDoc.length > 0) {
+      const uploadPromises = req.files.recruterCompanyDoc.map(file =>
+        cloudinary.uploader.upload(file.path, {
+          resource_type: "raw",
+          folder: "recruiters/companyDocs"
+        })
       );
 
-      if (!response) return res.status(404).json({ msg: "User Not Found!" });
-
-      console.log("User updated successfully");
-      return res.status(200).json({ msg: "User updated successfully", user: response });
-    } catch (e) {
-      console.error("Error updating recruiter profile:", e);
-      return res.status(500).json({ msg: "Internal Server Error" });
+      const results = await Promise.all(uploadPromises);
+      userUpdatedData.recruterCompanyDoc = results.map(r => r.secure_url);
     }
+
+    const response = await User.findByIdAndUpdate(userId, userUpdatedData, {
+      new: true,
+      runValidators: true
+    });
+
+    if (!response) return res.status(404).json({ msg: "User Not Found!" });
+    return res.status(200).json({ msg: "User updated successfully", user: response });
+
+  } catch (e) {
+    console.error("Error updating recruiter profile:", e);
+    return res.status(500).json({ msg: "Internal Server Error" });
+  }
 });
 
 
