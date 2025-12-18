@@ -13,11 +13,9 @@ router.post("/sentnotification", async (req, res) => {
         const type = req.body.type;
         let userId = req.body.userId;
         const extraData = req.body.extraData;
-
         if (!type) {
             return res.status(400).json({ msg: "Type and UserId are required" })
         }
-
         let title;
         let description;
         let targetScreen;
@@ -101,12 +99,11 @@ router.get("/getnotifications", jwtMiddleWare, async (req, res) => {
             return res.status(404).json({ msg: "No notifications found" });
         }
 
-        // refresh latest job data if present
         const enrichedNotifications = await Promise.all(
             notifications.map(async (notif) => {
                 if (notif.extraData?.job?._id) {
                     const job = await Jobs.findById(notif.extraData.job._id);
-                    if (job) notif.extraData.job = job; // replace old snapshot
+                    if (job) notif.extraData.job = job;
                 }
                 return notif;
             })
@@ -134,8 +131,5 @@ router.put("/readnotification/:id", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-
-
 
 module.exports = router;

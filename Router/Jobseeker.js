@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose')
 const User = require("../model/User/UserSchema")
 const Jobs = require("../model/User/jobSchema");
-const { jwtMiddleWare, generateToken } = require("../middleware/jwtAuthMiddleware");
-const upload = require("../config/multerConfig")
+const { jwtMiddleWare } = require("../middleware/jwtAuthMiddleware");
 
 
 router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
@@ -46,34 +44,6 @@ router.post("/savejob/:jobId", jwtMiddleWare, async (req, res) => {
     }
 });
 
-// router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
-
-//     try {
-//         const userId = req.jwtPayload.id;
-//         const user = await User.findById(userId).select('savedJobs');
-//         const savedJobIds = user?.savedJobs?.map(saved => saved.job.toString()) || [];
-
-
-
-//         const liveJobs = await Jobs.find({
-//             status: "live",
-//             "candidatesApplied.userId": { $ne: userId }, // Apply nahi ki
-//             _id: { $nin: savedJobIds } // Saved jobs mein nahi hai
-//         }).sort({ createdAt: -1 });
-
-//         if (!liveJobs || liveJobs.length === 0) {
-//             return res.status(404).json({ message: "No live jobs found" });
-//         }
-
-     
-
-//     } catch (e) {
-//         console.error("Error fetching saved jobs:", error);
-//         res.status(500).json({ message: "Internal Server Error" });
-//     }
-// }
-// );
-
 router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
   try {
     const userId = req.jwtPayload.id;
@@ -94,7 +64,6 @@ router.get("/getalllivejobs", jwtMiddleWare, async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 router.get("/appliedjobs", jwtMiddleWare, async (req, res) => {
     try {
@@ -251,9 +220,6 @@ router.get("/getjobseekerprofile", jwtMiddleWare, async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 })
-
-
-
 
 
 module.exports = router;

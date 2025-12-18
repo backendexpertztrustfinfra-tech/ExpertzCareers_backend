@@ -2,11 +2,8 @@ const express = require("express")
 const router = express.Router();
 const mongoose = require('mongoose')
 const Jobs = require("../model/User/jobSchema");
-const Users = require("../model/User/UserSchema")
 const { jwtMiddleWare } = require("../middleware/jwtAuthMiddleware");
-const { jobStatusMiddleware } = require("../middleware/jobStatusMiddleware");
 
-// ----------------dashboard stats -------------------------------
 router.get("/dashboard/stats", jwtMiddleWare, async (req, res) => {
   try {
     const userId = req.jwtPayload.id;
@@ -78,11 +75,6 @@ router.get("/live", jwtMiddleWare, async (req, res) => {
     return res.status(500).json({ msg: "Internal Server Error" });
   }
 });
-
-
-
-
-
 
 module.exports = router;
 
