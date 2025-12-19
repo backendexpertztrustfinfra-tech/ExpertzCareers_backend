@@ -7,7 +7,6 @@ const {
   generateToken,
 } = require("../middleware/jwtAuthMiddleware");
 const { jobStatusMiddleware } = require("../middleware/jobStatusMiddleware");
-const upload = require("../config/multerConfig");
 const Plans = require("../model/Plan/PlansSchema");
 const Subscription = require("../model/Subscriptions/SubscriptionSchema");
 const Razorpay = require("razorpay");
