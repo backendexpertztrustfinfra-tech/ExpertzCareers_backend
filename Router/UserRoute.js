@@ -18,9 +18,12 @@ const upload = require("../config/multerConfig");
 console.log("Cloudinary object:", cloudinary);
 
 const getPublicIdFromUrl = (url) => {
+  if (!url) return null;
+
   const parts = url.split("/");
-  const folderAndFile = parts.slice(-2).join("/");
-  return folderAndFile.replace(/\.[^/.]+$/, "");
+  const uploadIndex = parts.indexOf("upload");
+  const publicIdWithExt = parts.slice(uploadIndex + 1).join("/");
+  return publicIdWithExt.replace(/\.[^/.]+$/, ""); // remove extension
 };
 
 const isAllowed = (file, type) => {
@@ -166,20 +169,25 @@ router.put(
       const userUpdatedData = { ...req.body };
 
       const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ msg: "User Not Found!" });
+      if (!user) {
+        return res.status(404).json({ msg: "User Not Found!" });
+      }
 
-      // ----------- PROFILE PHOTO -----------
-      if (req.files?.profilphoto) {
+      /* ================= PROFILE PHOTO ================= */
+      if (req.files?.profilphoto?.[0]) {
         const file = req.files.profilphoto[0];
-        if (!isAllowed(file, "image"))
-          return res.status(400).json({ msg: "Invalid image file" });
 
-        // Delete old profile photo safely
-        if (user.profilphoto?.includes("cloudinary")) {
+        if (!file.mimetype.startsWith("image/")) {
+          return res.status(400).json({ msg: "Invalid image file" });
+        }
+
+        if (user.profilphoto) {
           const publicId = getPublicIdFromUrl(user.profilphoto);
-          await cloudinary.uploader.destroy(publicId, {
-            resource_type: "image",
-          });
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
+          }
         }
 
         const result = await uploadToCloudinary(
@@ -187,54 +195,47 @@ router.put(
           "profile_photos",
           "image"
         );
+
         userUpdatedData.profilphoto = result.secure_url;
       }
 
-      // ----------- RESUME PDF -----------
-      if (req.files?.resume) {
-        const file = req.files.resume[0];
+   /* ================= RESUME PDF ================= */
+if (req.files?.resume?.[0]) {
+  const file = req.files.resume[0];
+  console.log("Uploading file:", file.originalname, file.mimetype, file.size);
 
-        // Allow only PDFs
-        if (!isAllowed(file, "raw"))
-          return res.status(400).json({ msg: "Only PDF allowed" });
+  // Accept any PDF MIME type
+  if (!file.mimetype.includes("pdf")) {
+    return res.status(400).json({ msg: "Only PDF allowed" });
+  }
 
-        // Delete old PDF safely
-        if (user.resume) {
-          const publicId = getPublicIdFromUrl(user.resume);
-          await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
-        }
+  if (user.resume) {
+    const publicId = getPublicIdFromUrl(user.resume);
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+    }
+  }
 
-        const result = await uploadToCloudinary(
-          file.buffer,
-          "resumes",
-          "image",
-          {
-            public_id: `resume_${Date.now()}`,
-            format: "pdf",
-            access_mode: "public",
-          }
-        );
+  const result = await uploadToCloudinary(file.buffer, "resumes", "raw");
+  userUpdatedData.resume = result.secure_url;
+}
 
-        console.log("PDF upload info:", {
-          url: result.secure_url,
-          resource_type: result.resource_type,
-          access_mode: result.access_mode,
-        });
 
-        userUpdatedData.resume = result.secure_url + "?fl_attachment=false";
-      }
-
-      // ----------- INTRO VIDEO -----------
-      if (req.files?.introvideo) {
+      /* ================= INTRO VIDEO ================= */
+      if (req.files?.introvideo?.[0]) {
         const file = req.files.introvideo[0];
-        if (!isAllowed(file, "video"))
+
+        if (!file.mimetype.startsWith("video/")) {
           return res.status(400).json({ msg: "Invalid video file" });
+        }
 
         if (user.introvideo) {
           const publicId = getPublicIdFromUrl(user.introvideo);
-          await cloudinary.uploader.destroy(publicId, {
-            resource_type: "video",
-          });
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "video",
+            });
+          }
         }
 
         const result = await uploadToCloudinary(
@@ -242,31 +243,30 @@ router.put(
           "intro_videos",
           "video"
         );
+
         userUpdatedData.introvideo = result.secure_url;
       }
-
-      console.log("FINAL UPDATE DATA:", userUpdatedData);
 
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         userUpdatedData,
-        {
-          new: true,
-          runValidators: true,
-        }
+        { new: true, runValidators: true }
       );
 
-      res
-        .status(200)
-        .json({ msg: "User Updated Successfully", user: updatedUser });
+      return res.status(200).json({
+        msg: "User Updated Successfully",
+        user: updatedUser,
+      });
     } catch (error) {
       console.error("Upload error:", error);
-      res
-        .status(500)
-        .json({ msg: "Internal Server Error", error: error.message });
+      return res.status(500).json({
+        msg: "Internal Server Error",
+        error: error.message,
+      });
     }
   }
 );
+
 
 router.post("/send-otp", async (req, res) => {
   try {

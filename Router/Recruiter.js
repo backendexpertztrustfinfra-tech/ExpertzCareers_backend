@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
 const User = require("../model/User/UserSchema");
 const Jobs = require("../model/User/jobSchema");
 const {
@@ -14,7 +13,6 @@ const Subscription = require("../model/Subscriptions/SubscriptionSchema");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payments = require("../model/Payments/PaymentsSchema");
-const path = require("path");
 const { uploadToCloudinary } = require("../config/cloudinary");
 
 const cloudinary = require("cloudinary").v2;
@@ -341,42 +339,6 @@ router.get("/getRecruiterProfile", jwtMiddleWare, async (req, res) => {
   }
 });
 
-// router.put("/updateRecruiterProfile", upload.fields([
-//     { name: "profilphoto", maxCount: 1 }, // ek photo
-//     { name: "recruterCompanyDoc", maxCount: 1 } // multiple documents allow
-// ]), jwtMiddleWare, async (req, res) => {
-//     try {
-//         const userId = req.jwtPayload.id
-//         const userUpdatedData = req.body
-
-//         if (req.files["profilphoto"] && req.files["profilphoto"][0]) {
-//             userUpdatedData.profilphoto = `/uploads/${req.files["profilphoto"][0].filename}`;
-//         }
-//         if (req.files["recruterCompanyDoc"] && req.files["recruterCompanyDoc"][0]) {
-//             userUpdatedData.recruterCompanyDoc = `/uploads/${req.files["recruterCompanyDoc"][0].filename}`;
-//         }
-
-//         const response = await User.findOneAndUpdate(
-//             { _id: userId },
-//             userUpdatedData,
-//             {
-//                 new: true,
-//                 runValidators: true
-//             }
-//         )
-//         if (!response) {
-//             return res.status(404).json({ msg: "User Not Found!" })
-//         }
-//         console.log("User Update Succssfully");
-//         return res.status(200).json({ msg: "User Update Succssfully" })
-//     }
-//     catch (e) {
-//         console.log("error", e);
-//         return res.status(500).json({ msg: "Internal Server Error" })
-
-//     }
-// });
-
 router.put(
   "/updateRecruiterProfile",
   jwtMiddleWare,
@@ -387,7 +349,7 @@ router.put(
   async (req, res) => {
     try {
       const userId = req.jwtPayload.id;
-const userUpdatedData = JSON.parse(JSON.stringify(req.body));
+      const userUpdatedData = JSON.parse(JSON.stringify(req.body));
 
       if (req.files.profilphoto?.[0]) {
         const result = await uploadToCloudinary(
@@ -398,7 +360,6 @@ const userUpdatedData = JSON.parse(JSON.stringify(req.body));
         userUpdatedData.profilphoto = result.secure_url;
       }
 
-      // Company document uploads (PDF only)
       if (
         req.files.recruterCompanyDoc &&
         req.files.recruterCompanyDoc.length > 0
