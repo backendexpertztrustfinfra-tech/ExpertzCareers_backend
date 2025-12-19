@@ -199,27 +199,33 @@ router.put(
         userUpdatedData.profilphoto = result.secure_url;
       }
 
-   /* ================= RESUME PDF ================= */
-if (req.files?.resume?.[0]) {
-  const file = req.files.resume[0];
-  console.log("Uploading file:", file.originalname, file.mimetype, file.size);
+      /* ================= RESUME PDF ================= */
+      if (req.files?.resume?.[0]) {
+        const file = req.files.resume[0];
+        console.log(
+          "Uploading file:",
+          file.originalname,
+          file.mimetype,
+          file.size
+        );
 
-  // Accept any PDF MIME type
-  if (!file.mimetype.includes("pdf")) {
-    return res.status(400).json({ msg: "Only PDF allowed" });
-  }
+        // Accept any PDF MIME type
+        if (!file.mimetype.includes("pdf")) {
+          return res.status(400).json({ msg: "Only PDF allowed" });
+        }
 
-  if (user.resume) {
-    const publicId = getPublicIdFromUrl(user.resume);
-    if (publicId) {
-      await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
-    }
-  }
+        if (user.resume) {
+          const publicId = getPublicIdFromUrl(user.resume);
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "raw",
+            });
+          }
+        }
 
-  const result = await uploadToCloudinary(file.buffer, "resumes", "raw");
-  userUpdatedData.resume = result.secure_url;
-}
-
+        const result = await uploadToCloudinary(file.buffer, "resumes", "raw");
+        userUpdatedData.resume = result.secure_url;
+      }
 
       /* ================= INTRO VIDEO ================= */
       if (req.files?.introvideo?.[0]) {
@@ -266,7 +272,6 @@ if (req.files?.resume?.[0]) {
     }
   }
 );
-
 
 router.post("/send-otp", async (req, res) => {
   try {

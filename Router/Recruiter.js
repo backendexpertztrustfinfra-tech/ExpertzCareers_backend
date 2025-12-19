@@ -13,8 +13,8 @@ const Subscription = require("../model/Subscriptions/SubscriptionSchema");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payments = require("../model/Payments/PaymentsSchema");
+const upload = require("../config/multerConfig"); 
 const { uploadToCloudinary } = require("../config/cloudinary");
-
 const cloudinary = require("cloudinary").v2;
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -33,12 +33,96 @@ if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
   throw new Error("Razorpay keys are missing in environment variables");
 }
 
+// router.post(
+//   "/postjob",
+//   jwtMiddleWare,
+//   jobStatusMiddleware,
+//   async (req, res) => {
+//     try {
+//       const {
+//         jobTitle,
+//         jobCategory,
+//         description,
+//         noofOpening,
+//         jobType,
+//         location,
+//         address,
+//         gender,
+//         Qualification,
+//         totalExperience,
+//         relevantExperience,
+//         SalaryIncentive,
+//         salaryType,
+//         jobBenefits,
+//         jobSkills,
+//         documentRequired,
+//         workingDays,
+//         weekend,
+//         timing,
+//         shift,
+//         status,
+//         ClosedDate,
+//         companyName,
+//         companyLogo,
+//         free,
+//       } = req.body;
+
+//       // Create job entry
+//       const job = await Jobs.create({
+//         jobTitle,
+//         jobCategory,
+//         description,
+//         noofOpening,
+//         jobType,
+//         location,
+//         address,
+//         gender,
+//         Qualification,
+//         totalExperience,
+//         relevantExperience,
+//         SalaryIncentive,
+//         salaryType,
+//         jobBenefits,
+//         jobSkills,
+//         documentRequired,
+//         workingDays,
+//         weekend,
+//         timing,
+//         shift,
+//         status,
+//         ClosedDate,
+//         companyName,
+//         companyLogo, // ⭐ YOUR PROFILE PHOTO WILL BE SAVED HERE
+//         free,
+//         recruiterId: req.jwtPayload.id,
+//       });
+
+//       return res.json({
+//         success: true,
+//         job,
+//       });
+//     } catch (err) {
+//       console.error("Post job error:", err);
+//       res.status(500).json({ message: "Server error" });
+//     }
+//   }
+// );
+
+
 router.post(
   "/postjob",
   jwtMiddleWare,
   jobStatusMiddleware,
+  upload.single("companyLogo"), // <-- Multer expects 'companyLogo'
   async (req, res) => {
     try {
+      let companyLogoUrl = null;
+
+      if (req.file) {
+        const result = await uploadToCloudinary(req.file.buffer, "company_logos", "image");
+        companyLogoUrl = result.secure_url;
+      }
+
       const {
         jobTitle,
         jobCategory,
@@ -63,11 +147,9 @@ router.post(
         status,
         ClosedDate,
         companyName,
-        companyLogo,
         free,
       } = req.body;
 
-      // Create job entry
       const job = await Jobs.create({
         jobTitle,
         jobCategory,
@@ -92,15 +174,12 @@ router.post(
         status,
         ClosedDate,
         companyName,
-        companyLogo, // ⭐ YOUR PROFILE PHOTO WILL BE SAVED HERE
+        companyLogo: companyLogoUrl, // <-- uploaded file URL
         free,
         recruiterId: req.jwtPayload.id,
       });
 
-      return res.json({
-        success: true,
-        job,
-      });
+      return res.json({ success: true, job });
     } catch (err) {
       console.error("Post job error:", err);
       res.status(500).json({ message: "Server error" });
